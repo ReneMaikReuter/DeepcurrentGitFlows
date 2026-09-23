@@ -7,7 +7,7 @@ import { manualContent } from '../../i18n/manualContent'
 import type { AppSettings, Branch } from '../../../shared/types'
 import './SettingsModal.css'
 
-const VERSION = '0.1.9'
+const VERSION = '0.2.0'
 
 interface Props { onClose: () => void; onCheckUpdate?: () => void; noUpdate?: boolean }
 

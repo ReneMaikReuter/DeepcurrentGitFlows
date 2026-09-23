@@ -381,6 +381,8 @@ export interface AppSettings {
   lfsAutoLock: boolean
   gitignorePatterns: string[]
   githubTokenEncrypted: string | null
+  termsAccepted: boolean
+  lastSeenVersion: string | null
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -396,4 +398,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   lfsAutoLock: false,
   gitignorePatterns: [],
   githubTokenEncrypted: null,
+  termsAccepted: false,
+  lastSeenVersion: null,
 }

@@ -29,16 +29,6 @@
   transition: width 0.4s ease;
 }
 
-.update-overlay-progress-fill--indeterminate {
-  width: 40% !important;
-  animation: update-indeterminate 1.4s ease-in-out infinite;
-  transform-origin: left;
-}
-
-@keyframes update-indeterminate {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(300%); }
-}
 
 .update-overlay-box {
   background: var(--bg-surface);

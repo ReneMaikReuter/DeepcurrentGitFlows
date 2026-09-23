@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
-import { GitBranch, RefreshCw, Upload, Shield, Settings, ChevronDown } from 'lucide-react'
+import { GitBranch, RefreshCw, Upload, Shield, Settings, ChevronDown, Users } from 'lucide-react'
 import { useRepoStore } from '../../store/repoStore'
 import { ipc, IPC } from '../../hooks/useIpc'
 import { useLangStore, useT } from '../../i18n/useT'
 import { SettingsModal } from '../ui/SettingsModal'
 import { BranchSwitchModal } from '../ui/BranchSwitchModal'
 import { WindowControls } from '../ui/WindowControls'
+import { HealthBar } from '../ui/HealthBar'
 import { ProgressBar } from '../ui/ProgressBar'
 import { ToastContainer } from '../ui/ToastContainer'
 import { UpdateOverlay } from '../ui/UpdateOverlay'
 import { useUpdater } from '../../hooks/useUpdater'
 import { toast } from '../../store/toastStore'
+import { TeamPanel } from '../ui/TeamPanel'
 import type { AppSettings } from '../../../shared/types'
 import './CompactView.css'
 
@@ -34,6 +36,7 @@ export function CompactView({ onSwitchToPro }: Props) {
   const [branchMenuOpen, setBranchMenuOpen] = useState(false)
   const [switchModal, setSwitchModal] = useState<string | null>(null)
   const [switching, setSwitching] = useState(false)
+  const [activeTab, setActiveTab] = useState<'changes' | 'team'>('changes')
   const { setLang } = useLangStore()
   const t = useT()
 
@@ -127,6 +130,7 @@ export function CompactView({ onSwitchToPro }: Props) {
               {t('unreal_safe_mode')}
             </span>
           )}
+          <HealthBar compact />
           <button className="btn-icon titlebar-settings-btn" onClick={() => setSettingsOpen(true)} title="Einstellungen">
             <Settings size={14} strokeWidth={2} />
           </button>
@@ -193,8 +197,26 @@ export function CompactView({ onSwitchToPro }: Props) {
         </button>
       </div>
 
+      {/* Tab bar */}
+      <div className="compact-tabs">
+        <button className={`compact-tab ${activeTab === 'changes' ? 'active' : ''}`} onClick={() => setActiveTab('changes')}>
+          Änderungen
+        </button>
+        <button className={`compact-tab ${activeTab === 'team' ? 'active' : ''}`} onClick={() => setActiveTab('team')}>
+          <Users size={11} strokeWidth={2} style={{ display: 'inline', marginRight: 4 }} />
+          Team
+        </button>
+      </div>
+
+      {/* Team tab */}
+      {activeTab === 'team' && (
+        <div className="compact-team">
+          <TeamPanel />
+        </div>
+      )}
+
       {/* File list */}
-      <div className="compact-files">
+      <div className="compact-files" style={{ display: activeTab === 'changes' ? undefined : 'none' }}>
         {changedFiles.length === 0 ? (
           <div className="compact-empty">Keine Änderungen</div>
         ) : (
@@ -227,7 +249,7 @@ export function CompactView({ onSwitchToPro }: Props) {
       </div>
 
       {/* Commit area */}
-      <div className="compact-commit">
+      {activeTab === 'changes' && <div className="compact-commit">
         <textarea
           className="compact-commit-input"
           placeholder="Commit-Nachricht..."
@@ -246,7 +268,7 @@ export function CompactView({ onSwitchToPro }: Props) {
           <Upload size={12} strokeWidth={2} />
           {committing ? 'Wird committet...' : `Commit (${selectedFiles.size})`}
         </button>
-      </div>
+      </div>}
     </div>
   )
 }

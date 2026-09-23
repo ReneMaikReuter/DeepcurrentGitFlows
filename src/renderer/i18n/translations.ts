@@ -46,7 +46,7 @@ export const translations = {
     sync_cancel: 'Abbrechen',
     sync_retry: 'Erneut versuchen',
     sync_unreal_title: 'Unreal Engine erkannt. Safe Mode aktiv.',
-    sync_unreal_desc: 'UE5 laeuft gerade. Bitte Unreal Engine schliessen bevor du synchronisierst.',
+    sync_unreal_desc: 'UE5 läuft gerade. Bitte Unreal Engine schließen bevor du synchronisierst.',
 
     // SidebarPanel
     sidebar_branches: 'Branches',
@@ -69,11 +69,11 @@ export const translations = {
     history_no_commits: 'Keine Commits gefunden.',
     history_no_files: 'Keine Dateien (leerer Commit)',
     history_restore: 'Wiederherstellen',
-    history_undo: 'Rueckgaengig',
-    history_undo_all: 'Alle rueckgaengig',
+    history_undo: 'Rückgängig',
+    history_undo_all: 'Alle rückgängig',
     history_revert: 'Revert',
     history_revert_confirm: 'Revert?',
-    history_select_all_deleted: 'Alle geloeschten auswaehlen',
+    history_select_all_deleted: 'Alle gelöschten auswählen',
     history_commits_found: 'Commits gefunden',
     history_remote: 'Remote',
     history_local: 'Lokal',

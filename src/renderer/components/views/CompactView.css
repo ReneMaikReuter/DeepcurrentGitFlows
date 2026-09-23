@@ -160,6 +160,37 @@
   color: #f59e0b;
 }
 
+/* Tabs */
+.compact-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.compact-tab {
+  flex: 1;
+  padding: 6px 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s;
+}
+.compact-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.compact-tab:hover:not(.active) { color: var(--text-primary); }
+
+/* Team view in compact */
+.compact-team {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
 /* File list */
 .compact-files {
   flex: 1;

@@ -56,7 +56,7 @@ export function SidebarPanel() {
   // exists in git symbolic-ref but has no commits yet), show it as a stub.
   const displayBranches =
     localBranches.length === 0 && currentBranch
-      ? [{ name: currentBranch, isCurrent: true, isRemote: false, upstream: null, aheadBy: 0, behindBy: 0, lastCommitHash: null, lastCommitMessage: null, lastCommitAuthor: null, lastCommitDate: null, parentBranch: null }]
+      ? [{ name: currentBranch, isCurrent: true, isRemote: false, upstream: null, aheadBy: 0, behindBy: 0, lastCommitHash: null, lastCommitMessage: null, lastCommitAuthor: null, lastCommitDate: null, parentBranch: null, activeUsers: [] }]
       : localBranches
 
   const handlePushBranch = async () => {
@@ -325,7 +325,10 @@ export function SidebarPanel() {
                 onClick={() => { setConfirmDeleteBranch(null); setConfirmMergeBranch(null); setConfirmMergeInto(null); handleBranchClick(branch.name) }}
                 disabled={switching}
               >
-                <span className={`branch-indicator${isDirty ? ' branch-indicator--dirty' : ''}`} />
+                <span
+                  className={`branch-indicator${isDirty ? ' branch-indicator--dirty' : ''}${branch.activeUsers?.length > 0 ? ' branch-indicator--active' : ''}`}
+                  title={branch.activeUsers?.length > 0 ? `Aktiv: ${branch.activeUsers.join(', ')}` : undefined}
+                />
                 <GitBranch size={12} strokeWidth={1.8} style={{ flexShrink: 0, color: branch.isCurrent ? 'var(--accent)' : 'var(--text-secondary)' }} />
                 <span className="branch-name-wrap">
                   <span className="branch-name truncate">{branch.name}</span>

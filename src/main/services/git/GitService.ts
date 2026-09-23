@@ -157,6 +157,7 @@ export class GitService {
         lastCommitAuthor: author || null,
         lastCommitDate: dateStr ? parseInt(dateStr) * 1000 : null,
         parentBranch,
+        activeUsers: [],
       })
     }
 

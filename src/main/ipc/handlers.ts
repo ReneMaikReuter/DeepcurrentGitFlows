@@ -219,7 +219,39 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.BRANCH_LIST, async (_e, repoPath: string) => {
     const guard = guardRepo(repoPath); if (guard) return guard
     const git = new GitService(repoPath)
-    return git.listBranches()
+    const executor = new GitExecutor(repoPath)
+    const branches = await git.listBranches()
+
+    // Enrich branches with activeUsers: cross-reference LFS locks with who is on each branch
+    try {
+      const locksRaw = await executor.git(['lfs', 'locks', '--json'])
+      if (locksRaw.success && locksRaw.stdout.trim()) {
+        const locks: Array<{ path: string; owner: { name: string } }> = JSON.parse(locksRaw.stdout)
+        // For each lock owner, find their current branch via remote log
+        const ownerBranches = new Map<string, string>() // owner name → branch name
+        for (const lock of locks) {
+          const owner = lock.owner?.name
+          if (!owner || ownerBranches.has(owner)) continue
+          // Find the most recent remote commit by this author across all branches
+          for (const b of branches.filter(x => !x.isRemote)) {
+            const log = await executor.git(['log', `origin/${b.name}`, '-1', `--author=${owner}`, '--format=%H', '--'])
+            if (log.success && log.stdout.trim()) {
+              ownerBranches.set(owner, b.name)
+              break
+            }
+          }
+        }
+        // Assign activeUsers to branches
+        for (const b of branches) {
+          b.activeUsers = []
+          for (const [owner, branchName] of ownerBranches) {
+            if (branchName === b.name) b.activeUsers.push(owner)
+          }
+        }
+      }
+    } catch { /* LFS not available or no locks */ }
+
+    return branches
   })
 
   async function isUnrealRunning(): Promise<boolean> {

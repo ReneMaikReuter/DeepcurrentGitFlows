@@ -29,8 +29,9 @@ contextBridge.exposeInMainWorld('deepcurrent', {
     ipcRenderer.send(channel, ...args)
   },
   on: (channel: IpcChannel | string, listener: (...args: unknown[]) => void) => {
-    ipcRenderer.on(channel, (_event, ...args) => listener(...args))
-    return () => ipcRenderer.removeListener(channel, listener as any)
+    const wrapped = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => listener(...args)
+    ipcRenderer.on(channel, wrapped)
+    return () => ipcRenderer.removeListener(channel, wrapped)
   },
   off: (channel: IpcChannel, listener: (...args: unknown[]) => void) => {
     ipcRenderer.removeListener(channel, listener as any)

@@ -16,18 +16,20 @@ export function UpdateOverlay({ version, downloadProgress, onInstall }: Props) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const simRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Simulate download progress (electron-updater often doesn't emit on Windows)
+  // Simulate download progress — fast early, slows to a crawl near 99
   useEffect(() => {
     simRef.current = setInterval(() => {
       setSimulatedPct((p) => {
-        if (p >= 90) { clearInterval(simRef.current!); return 90 }
-        return p + Math.random() * 3
+        if (p >= 99) return 99
+        // Slow down as we approach 99 so it never visually freezes
+        const step = p < 60 ? Math.random() * 3 : p < 85 ? Math.random() * 1.2 : Math.random() * 0.2
+        return Math.min(99, p + step)
       })
     }, 600)
     return () => { if (simRef.current) clearInterval(simRef.current) }
   }, [])
 
-  // Real progress jumps ahead of simulated
+  // Real progress jumps ahead of simulated; 100 = download done
   useEffect(() => {
     if (downloadProgress != null && downloadProgress > 0) {
       setSimulatedPct((p) => Math.max(p, downloadProgress))
@@ -38,6 +40,21 @@ export function UpdateOverlay({ version, downloadProgress, onInstall }: Props) {
       setTimeout(() => setPhase('installing'), 400)
     }
   }, [downloadProgress])
+
+  // Fallback: if update-downloaded event never arrives, switch after 45s
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPhase((p) => {
+        if (p === 'downloading') {
+          if (simRef.current) clearInterval(simRef.current)
+          setSimulatedPct(100)
+          return 'installing'
+        }
+        return p
+      })
+    }, 45000)
+    return () => clearTimeout(t)
+  }, [])
 
   // Countdown for auto-install
   useEffect(() => {

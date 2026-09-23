@@ -581,6 +581,7 @@ export function registerIpcHandlers(): void {
   const SETTINGS_ALLOWED_KEYS = new Set([
     'theme', 'language', 'fontSize', 'defaultBranch',
     'protectedBranches', 'backupRetentionCount', 'backupAutoDelete', 'lfsAutoLock',
+    'termsAccepted', 'lastSeenVersion', 'backupPath',
   ])
 
   ipcMain.handle(IPC.SETTINGS_SET, async (_e, patch: Partial<import('../../shared/types').AppSettings>) => {

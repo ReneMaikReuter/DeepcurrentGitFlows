@@ -401,26 +401,28 @@ export function registerIpcHandlers(): void {
   // ── Backups ────────────────────────────────────────────────────────────────
 
   ipcMain.handle(IPC.BACKUP_CREATE, async (_e, repoPath: string, label: string) => {
-    const retention = settings.get().backupRetentionCount ?? 10
-    const backup = new BackupService(repoPath, retention)
+    const s = settings.get()
+    const backup = new BackupService(repoPath, s.backupRetentionCount ?? 10, s.backupPath || undefined)
     const result = await backup.createBackup(label || 'manual')
     log.info('backup:create', [label || 'manual'])
     return { success: true, backup: result }
   })
 
   ipcMain.handle(IPC.BACKUP_LIST, async (_e, repoPath: string) => {
-    const retention = settings.get().backupRetentionCount ?? 10
-    const backup = new BackupService(repoPath, retention)
+    const s = settings.get()
+    const backup = new BackupService(repoPath, s.backupRetentionCount ?? 10, s.backupPath || undefined)
     return backup.listBackups()
   })
 
   ipcMain.handle(IPC.BACKUP_RESTORE, async (_e, repoPath: string, backupId: string) => {
-    const backup = new BackupService(repoPath)
+    const s = settings.get()
+    const backup = new BackupService(repoPath, 10, s.backupPath || undefined)
     return backup.restoreBackup(backupId)
   })
 
   ipcMain.handle(IPC.BACKUP_DELETE, async (_e, repoPath: string, backupId: string) => {
-    const backup = new BackupService(repoPath)
+    const s = settings.get()
+    const backup = new BackupService(repoPath, 10, s.backupPath || undefined)
     return backup.deleteBackup(backupId)
   })
 

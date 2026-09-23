@@ -143,11 +143,11 @@ function setupAutoUpdater(): void {
 
   ipcMain.on('updater:install-now', () => {
     writeLog(`install-now requested, downloaded=${updaterState.updateDownloaded}`)
-    if (updaterState.updateDownloaded) {
-      autoUpdater.quitAndInstall(false, true)
-    } else {
+    if (!updaterState.updateDownloaded) {
       mainWindow?.webContents.send('updater:not-ready')
+      return
     }
+    autoUpdater.quitAndInstall(false, true)
   })
 
   ipcMain.handle('shell:open-external', (_, url: string) => {
@@ -160,15 +160,15 @@ function setupAutoUpdater(): void {
   ipcMain.handle('updater:get-state', () => updaterState)
 
   ipcMain.handle('updater:check', async () => {
-    try {
-      await autoUpdater.checkForUpdates()
-    } catch (e) {
+    try { await autoUpdater.checkForUpdates() } catch (e) {
       mainWindow?.webContents.send('updater:error', String(e))
     }
   })
 
   autoUpdater.checkForUpdates().catch(() => {})
-  setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 2 * 60 * 60 * 1000)
+  setInterval(() => {
+    autoUpdater.checkForUpdates().catch(() => {})
+  }, 2 * 60 * 60 * 1000)
 }
 
 // Reject any TLS certificate that Electron doesn't trust natively

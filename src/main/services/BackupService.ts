@@ -25,8 +25,14 @@ export class BackupService {
   constructor(
     private readonly repositoryPath: string,
     retentionCount: number = DEFAULT_RETENTION_COUNT,
+    customBackupPath?: string,
   ) {
-    this.backupRoot = getBackupRoot(repositoryPath)
+    if (customBackupPath && customBackupPath.trim()) {
+      const repoSlug = repositoryPath.replace(/[^a-zA-Z0-9]/g, '_').slice(-60)
+      this.backupRoot = path.join(customBackupPath.trim(), repoSlug)
+    } else {
+      this.backupRoot = getBackupRoot(repositoryPath)
+    }
     this.retentionCount = retentionCount
   }
 

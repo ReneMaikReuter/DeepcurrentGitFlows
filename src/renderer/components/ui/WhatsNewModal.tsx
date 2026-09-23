@@ -9,6 +9,17 @@ interface ChangeEntry {
 
 const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.2.4',
+    date: '23. September 2026',
+    changes: [
+      'Backup-Speicherort frei konfigurierbar (Standard AppData, alternativ Netzwerkpfad)',
+      'Branch-Erstellung: Basis-Branch visuell wählbar',
+      'Branch-Wechsel und Push-Button im Kompakt-Modus',
+      'Geschützte Branches können nicht mehr gelöscht werden',
+      'AutoLock: LFS-Dateien werden direkt beim Bearbeiten gesperrt',
+    ],
+  },
+  {
     version: '0.2.3',
     date: '23. September 2026',
     changes: [

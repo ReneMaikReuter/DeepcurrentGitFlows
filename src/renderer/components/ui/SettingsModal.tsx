@@ -9,19 +9,26 @@ import './SettingsModal.css'
 
 const CHANGELOG_ENTRIES = [
   {
+    version: '0.2.4',
+    date: '23. September 2026',
+    changes: [
+      'Backup-Speicherort frei konfigurierbar (Standard AppData, alternativ Netzwerkpfad)',
+      'Backups werden jetzt pro Branch und mit konfiguriertem Limit gespeichert',
+      'Branch-Erstellung: Basis-Branch visuell wählbar',
+      'Branch-Wechsel im Kompakt-Modus hinzugefügt',
+      'Push-Button im Kompakt-Modus bei ausstehenden Commits',
+      'Geschützte Branches: Löschen wird serverseitig blockiert',
+      'AutoLock: LFS-Dateien werden beim Bearbeiten automatisch gesperrt',
+      'Changelog-Tab in den Einstellungen',
+    ],
+  },
+  {
     version: '0.2.3',
     date: '23. September 2026',
     changes: [
-      'Nutzungsbedingungen: korrekte Bezeichnung als Einzelperson (René-Maik Reuter, Projektbezeichnung Deepcurrent Studio)',
-      'Rechtlicher Hinweis auf Unternehmensform entfernt',
-      'Branch-Wechsel im Kompakt-Modus hinzugefügt',
-      'Push-Button im Kompakt-Modus (erscheint wenn Commits zum Pushen vorhanden)',
-      'Geschützte Branches: Löschen wird jetzt serverseitig blockiert',
-      'Backup-Limit wird jetzt korrekt eingehalten',
-      'AutoLock: LFS-Dateien werden beim Bearbeiten automatisch gesperrt (nicht erst nach Commit)',
-      'Changelog-Tab in den Einstellungen',
-      'Alle Änderungen in den Release Notes vollständig ausgeschrieben (kein +N mehr)',
+      'Nutzungsbedingungen: korrekte Bezeichnung als Einzelperson',
       'Schrifttext in Nutzungsbedingungen besser lesbar',
+      'Alle Änderungen in den Release Notes vollständig ausgeschrieben',
     ],
   },
   {
@@ -323,6 +330,41 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
               >
                 <span className="settings-toggle-knob" />
               </button>
+            </div>
+          </div>
+
+          {/* Backup-Ordner */}
+          <div className="settings-section">
+            <div className="settings-section-title">Backup-Ordner</div>
+
+            <div className="settings-row">
+              <div className="settings-label">
+                <span>Speicherort</span>
+                <span className="settings-hint">Leer = Standard (AppData). Netzwerkpfad z.B. Z:\Backups\Unreal</span>
+              </div>
+              <div style={{ display: 'flex', gap: 'var(--sp-2)', alignItems: 'center', flex: 1 }}>
+                <input
+                  className="settings-input-sm"
+                  style={{ flex: 1 }}
+                  value={settings.backupPath ?? ''}
+                  placeholder="Standard (AppData)"
+                  onChange={(e) => setSettings({ ...settings, backupPath: e.target.value })}
+                  onBlur={() => save({ backupPath: settings.backupPath })}
+                  onKeyDown={(e) => { if (e.key === 'Enter') save({ backupPath: settings.backupPath }) }}
+                />
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={async () => {
+                    const picked = await (window as any).deepcurrent.invoke('dialog:open-directory')
+                    if (picked) {
+                      setSettings({ ...settings, backupPath: picked })
+                      save({ backupPath: picked })
+                    }
+                  }}
+                >
+                  Durchsuchen
+                </button>
+              </div>
             </div>
           </div>
 

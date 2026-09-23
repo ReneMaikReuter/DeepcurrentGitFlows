@@ -383,6 +383,7 @@ export interface AppSettings {
   githubTokenEncrypted: string | null
   termsAccepted: boolean
   lastSeenVersion: string | null
+  backupPath: string
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -400,4 +401,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   githubTokenEncrypted: null,
   termsAccepted: false,
   lastSeenVersion: null,
+  backupPath: '',
 }

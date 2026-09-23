@@ -12,6 +12,7 @@ ALLOWED_INVOKE_CHANNELS.add('window:maximize')
 ALLOWED_INVOKE_CHANNELS.add('window:close')
 ALLOWED_INVOKE_CHANNELS.add('window:is-maximized')
 ALLOWED_INVOKE_CHANNELS.add('updater:check')
+ALLOWED_INVOKE_CHANNELS.add('updater:get-state')
 
 const ALLOWED_SEND_CHANNELS = new Set<string>(['updater:install-now'])
 

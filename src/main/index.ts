@@ -80,6 +80,14 @@ function createWindow(): void {
   ipcMain.handle('window:is-maximized', () => mainWindow?.isMaximized() ?? false)
 }
 
+// Persisted updater state so renderer can query it on mount (avoids race condition)
+const updaterState = {
+  updateAvailable: false,
+  updateDownloaded: false,
+  version: null as string | null,
+  downloadProgress: null as number | null,
+}
+
 function setupAutoUpdater(): void {
   const isDev = process.env.NODE_ENV === 'development' || !!process.env.VITE_DEV_SERVER_URL
   if (isDev) return
@@ -89,6 +97,8 @@ function setupAutoUpdater(): void {
   autoUpdater.logger = null
 
   autoUpdater.on('update-available', (info) => {
+    updaterState.updateAvailable = true
+    updaterState.version = info.version
     mainWindow?.webContents.send('updater:update-available', info.version)
   })
 
@@ -97,10 +107,14 @@ function setupAutoUpdater(): void {
   })
 
   autoUpdater.on('download-progress', (progress) => {
-    mainWindow?.webContents.send('updater:download-progress', Math.round(progress.percent))
+    updaterState.downloadProgress = Math.round(progress.percent)
+    mainWindow?.webContents.send('updater:download-progress', updaterState.downloadProgress)
   })
 
   autoUpdater.on('update-downloaded', (info) => {
+    updaterState.updateDownloaded = true
+    updaterState.downloadProgress = 100
+    updaterState.version = info.version
     mainWindow?.webContents.send('updater:update-downloaded', info.version)
   })
 
@@ -108,12 +122,13 @@ function setupAutoUpdater(): void {
     mainWindow?.webContents.send('updater:error', err.message)
   })
 
-  // Renderer requests immediate install & restart
   ipcMain.on('updater:install-now', () => {
     autoUpdater.quitAndInstall(false, true)
   })
 
-  // Renderer requests manual check
+  // Renderer queries current state on mount — fixes race condition on fast connections
+  ipcMain.handle('updater:get-state', () => updaterState)
+
   ipcMain.handle('updater:check', async () => {
     try {
       await autoUpdater.checkForUpdates()
@@ -122,7 +137,6 @@ function setupAutoUpdater(): void {
     }
   })
 
-  // Check once on start, then every 2 hours
   autoUpdater.checkForUpdates().catch(() => {})
   setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 2 * 60 * 60 * 1000)
 }

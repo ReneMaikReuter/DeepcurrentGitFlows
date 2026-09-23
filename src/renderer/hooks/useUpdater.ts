@@ -23,6 +23,16 @@ export function useUpdater() {
     const dc = (window as any).deepcurrent
     if (!dc?.on) return
 
+    // Query persisted state first — catches events that fired before React mounted
+    dc.invoke('updater:get-state').then((s: any) => {
+      if (!s) return
+      if (s.updateDownloaded) {
+        setState((prev) => ({ ...prev, updateAvailable: true, updateDownloaded: true, downloadProgress: 100, version: s.version }))
+      } else if (s.updateAvailable) {
+        setState((prev) => ({ ...prev, updateAvailable: true, version: s.version, downloadProgress: s.downloadProgress }))
+      }
+    }).catch(() => {})
+
     const offAvailable = dc.on('updater:update-available', (version: string) => {
       setState((s) => ({ ...s, updateAvailable: true, version, noUpdate: false, error: null }))
     })

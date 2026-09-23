@@ -7,9 +7,9 @@ import { manualContent } from '../../i18n/manualContent'
 import type { AppSettings, Branch } from '../../../shared/types'
 import './SettingsModal.css'
 
-const VERSION = '0.1.0'
+const VERSION = '0.1.1'
 
-interface Props { onClose: () => void }
+interface Props { onClose: () => void; onCheckUpdate?: () => void; noUpdate?: boolean }
 
 function applyFontSize(size: AppSettings['fontSize']) {
   const zoom = size === 'small' ? '0.88' : size === 'large' ? '1.14' : '1'
@@ -20,7 +20,7 @@ function applyTheme(theme: AppSettings['theme']) {
   document.documentElement.setAttribute('data-theme', theme)
 }
 
-export function SettingsModal({ onClose }: Props) {
+export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [availableBranches, setAvailableBranches] = useState<string[]>([])
   const [saved, setSaved] = useState(false)
@@ -347,6 +347,11 @@ export function SettingsModal({ onClose }: Props) {
           <div className="settings-section settings-section--about">
             <Info size={12} strokeWidth={2} style={{ color: 'var(--text-secondary)' }} />
             <span className="settings-about-text">Deepcurrent Git Flows <strong>v{VERSION}</strong>. {t('settings_about')}</span>
+            {onCheckUpdate && (
+              <button className="btn btn-ghost btn-sm" onClick={onCheckUpdate} title="Auf neue Version prüfen">
+                <RotateCcw size={10} /> {noUpdate ? 'Aktuell' : 'Updates suchen'}
+              </button>
+            )}
             <button className="btn btn-ghost btn-sm" onClick={() => ipc.invoke(IPC.SETTINGS_GET).then(() => window.location.reload())}>
               <RotateCcw size={10} /> {t('settings_restart')}
             </button>

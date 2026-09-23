@@ -4,7 +4,6 @@ import { useRepoStore } from '../../store/repoStore'
 import { ipc, IPC } from '../../hooks/useIpc'
 import { SettingsModal } from '../ui/SettingsModal'
 import { useLangStore, useT } from '../../i18n/useT'
-import { toast } from '../../store/toastStore'
 import type { AppSettings } from '../../../shared/types'
 
 function applyFontSize(size: AppSettings['fontSize']) {
@@ -21,6 +20,8 @@ import { HealthBar } from '../ui/HealthBar'
 import { ToastContainer } from '../ui/ToastContainer'
 import { ProgressBar } from '../ui/ProgressBar'
 import { WindowControls } from '../ui/WindowControls'
+import { UpdateOverlay } from '../ui/UpdateOverlay'
+import { useUpdater } from '../../hooks/useUpdater'
 import './MainView.css'
 
 const SIDEBAR_MIN = 160
@@ -29,6 +30,7 @@ const SIDEBAR_DEFAULT = 210
 
 export function MainView() {
   const { currentRepo, health, refreshStatus, changedFiles } = useRepoStore()
+  const { state: updater, checkForUpdates, installNow } = useUpdater()
   const [activeTab, setActiveTab] = useState<'changes' | 'sync' | 'history' | 'team'>('changes')
   const [ueRunning, setUeRunning] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -64,15 +66,7 @@ export function MainView() {
       if (s?.language) setLang(s.language)
     })
 
-    const offAvailable = window.deepcurrent.on(IPC.UPDATE_AVAILABLE as any, (version: unknown) => {
-      toast.info(`Update v${version} verfügbar. Wird heruntergeladen…`, true)
-    })
-    const offDownloaded = window.deepcurrent.on(IPC.UPDATE_DOWNLOADED as any, (version: unknown) => {
-      toast.ok(`Update v${version} bereit. Klicke zum Installieren.`, () => {
-        window.deepcurrent.invoke(IPC.UPDATE_INSTALL_NOW as any)
-      })
-    })
-    return () => { offAvailable(); offDownloaded() }
+    return () => {}
   }, [])
 
   useEffect(() => {
@@ -99,6 +93,13 @@ export function MainView() {
     <div className="main-layout-root">
       <ProgressBar />
       <ToastContainer />
+      {(updater.updateAvailable || updater.updateDownloaded) && updater.version && (
+        <UpdateOverlay
+          version={updater.version}
+          downloadProgress={updater.downloadProgress}
+          onInstall={installNow}
+        />
+      )}
       {/* Titlebar */}
       <div className="titlebar">
         <span className="titlebar-app">Deepcurrent Git Flows</span>
@@ -120,7 +121,7 @@ export function MainView() {
         <WindowControls />
       </div>
 
-      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} onCheckUpdate={checkForUpdates} noUpdate={updater.noUpdate} />}
 
       <div className="main-body">
         {/* Sidebar */}

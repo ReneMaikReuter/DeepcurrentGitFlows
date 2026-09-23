@@ -91,13 +91,34 @@ function setupAutoUpdater(): void {
     mainWindow?.webContents.send('updater:update-available', info.version)
   })
 
+  autoUpdater.on('update-not-available', () => {
+    mainWindow?.webContents.send('updater:no-update')
+  })
+
+  autoUpdater.on('download-progress', (progress) => {
+    mainWindow?.webContents.send('updater:download-progress', Math.round(progress.percent))
+  })
+
   autoUpdater.on('update-downloaded', (info) => {
     mainWindow?.webContents.send('updater:update-downloaded', info.version)
+  })
+
+  autoUpdater.on('error', (err) => {
+    mainWindow?.webContents.send('updater:error', err.message)
   })
 
   // Renderer requests immediate install & restart
   ipcMain.on('updater:install-now', () => {
     autoUpdater.quitAndInstall(false, true)
+  })
+
+  // Renderer requests manual check
+  ipcMain.handle('updater:check', async () => {
+    try {
+      await autoUpdater.checkForUpdates()
+    } catch (e) {
+      mainWindow?.webContents.send('updater:error', String(e))
+    }
   })
 
   // Check once on start, then every 2 hours

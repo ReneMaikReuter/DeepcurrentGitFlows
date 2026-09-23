@@ -6,12 +6,15 @@ import { ipc, IPC } from '../../hooks/useIpc'
 import { useT } from '../../i18n/useT'
 import { GitHubModal } from '../ui/GitHubModal'
 import { WindowControls } from '../ui/WindowControls'
+import { UpdateOverlay } from '../ui/UpdateOverlay'
+import { useUpdater } from '../../hooks/useUpdater'
 import type { Repository, RepositoryHealth } from '../../../shared/types'
 import './WelcomeView.css'
 
 export function WelcomeView() {
   const t = useT()
   const { savedRepos, loadSavedRepos, openRepository, isLoading, error, clearError } = useRepoStore()
+  const { state: updater, checkForUpdates, installNow } = useUpdater()
   const [showClone, setShowClone] = useState(false)
   const [showGitHub, setShowGitHub] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -34,7 +37,10 @@ export function WelcomeView() {
 
   return (
     <div className="welcome">
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {(updater.updateAvailable || updater.updateDownloaded) && updater.version && (
+        <UpdateOverlay version={updater.version} downloadProgress={updater.downloadProgress} onInstall={installNow} />
+      )}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} onCheckUpdate={checkForUpdates} noUpdate={updater.noUpdate} />}
       <div className="titlebar">
         <div className="titlebar-spacer" />
         <div className="titlebar-status">

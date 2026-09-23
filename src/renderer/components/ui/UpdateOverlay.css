@@ -1,0 +1,72 @@
+.update-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--sp-4);
+  -webkit-app-region: no-drag;
+}
+
+.update-overlay-progress-track {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  z-index: 10000;
+  overflow: hidden;
+}
+
+.update-overlay-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+.update-overlay-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 10px);
+  padding: var(--sp-8, 32px) var(--sp-8, 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 320px;
+  text-align: center;
+}
+
+.update-overlay-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.update-overlay-title {
+  font-size: var(--text-lg, 18px);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.update-overlay-version {
+  font-size: var(--text-sm);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.update-overlay-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-top: var(--sp-2);
+}
+
+.update-overlay-pct {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+}

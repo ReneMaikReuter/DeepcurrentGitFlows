@@ -11,15 +11,24 @@ ALLOWED_INVOKE_CHANNELS.add('window:minimize')
 ALLOWED_INVOKE_CHANNELS.add('window:maximize')
 ALLOWED_INVOKE_CHANNELS.add('window:close')
 ALLOWED_INVOKE_CHANNELS.add('window:is-maximized')
+ALLOWED_INVOKE_CHANNELS.add('updater:check')
+
+const ALLOWED_SEND_CHANNELS = new Set<string>(['updater:install-now'])
 
 contextBridge.exposeInMainWorld('deepcurrent', {
-  invoke: (channel: IpcChannel | 'dialog:open-directory', ...args: unknown[]) => {
+  invoke: (channel: IpcChannel | 'dialog:open-directory' | 'updater:check', ...args: unknown[]) => {
     if (!ALLOWED_INVOKE_CHANNELS.has(channel)) {
       throw new Error(`IPC channel not allowed: ${channel}`)
     }
     return ipcRenderer.invoke(channel, ...args)
   },
-  on: (channel: IpcChannel, listener: (...args: unknown[]) => void) => {
+  send: (channel: string, ...args: unknown[]) => {
+    if (!ALLOWED_SEND_CHANNELS.has(channel)) {
+      throw new Error(`IPC send channel not allowed: ${channel}`)
+    }
+    ipcRenderer.send(channel, ...args)
+  },
+  on: (channel: IpcChannel | string, listener: (...args: unknown[]) => void) => {
     ipcRenderer.on(channel, (_event, ...args) => listener(...args))
     return () => ipcRenderer.removeListener(channel, listener as any)
   },

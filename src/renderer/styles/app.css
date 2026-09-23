@@ -1,0 +1,18 @@
+/* app.css — minimal shell; all design tokens live in globals.css */
+
+.app-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-app);
+}
+
+/* panel-label kept for any legacy usage */
+.panel-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}

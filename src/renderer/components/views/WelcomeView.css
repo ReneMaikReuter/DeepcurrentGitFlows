@@ -1,0 +1,247 @@
+.welcome {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app);
+}
+
+.welcome-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  width: 340px;
+}
+
+.welcome-wordmark {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: var(--sp-2);
+}
+
+.welcome-app-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.welcome-tagline {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.welcome-divider {
+  height: 1px;
+  background: var(--border);
+}
+
+.welcome-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.welcome-action-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  height: 34px;
+  padding: 0 var(--sp-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.welcome-action-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.welcome-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.welcome-action-btn--primary {
+  background: var(--bg-elevated);
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+.welcome-action-btn--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-elevated));
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.error-banner {
+  font-size: var(--text-xs);
+  color: var(--error);
+  background: var(--error-dim);
+  border: 1px solid rgba(224, 82, 82, 0.2);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+/* ── Recent repos ─────────────────────────────────────────────── */
+.recent-repos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.recent-repos-header {
+  display: flex;
+  align-items: center;
+  padding-bottom: var(--sp-1);
+}
+
+.recent-repos-label {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.recent-repos-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--sp-2);
+  height: 26px;
+  margin-bottom: var(--sp-1);
+}
+.recent-repos-search:focus-within { border-color: var(--border-focus); }
+
+.recent-repos-search-icon { color: var(--text-muted); flex-shrink: 0; }
+
+.recent-repos-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  height: 100%;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  padding: 0;
+}
+.recent-repos-search-input::placeholder { color: var(--text-muted); }
+
+.recent-repos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.recent-repo-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  width: 100%;
+  border: 1px solid transparent;
+}
+.recent-repo-item:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+}
+
+.recent-repo-name {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.recent-repo-path {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+/* ── Clone panel ──────────────────────────────────────────────── */
+.clone-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+}
+
+.clone-panel-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.clone-panel-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.clone-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.clone-label {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.clone-hint-error {
+  font-size: var(--text-xs);
+  color: var(--error);
+}
+
+.clone-dir-row {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.clone-dir-row input {
+  flex: 1;
+}
+
+.clone-dir-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.clone-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.clone-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}

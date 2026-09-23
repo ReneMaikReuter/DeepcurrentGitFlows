@@ -1,0 +1,286 @@
+.sync-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: var(--sp-5) var(--sp-4);
+  gap: var(--sp-4);
+}
+
+/* ── Idle / Hero ─────────────────────────────────────────────────── */
+.sync-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4) 0;
+}
+
+.sync-hero-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.sync-hero-title {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.sync-description {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+}
+
+/* ── Sync button ─────────────────────────────────────────────────── */
+.btn-sync {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  height: 32px;
+  padding: 0 var(--sp-5);
+  background: var(--accent);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s;
+  align-self: flex-start;
+}
+.btn-sync:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-sync:disabled { opacity: 0.38; cursor: not-allowed; }
+
+/* ── Progress ────────────────────────────────────────────────────── */
+.sync-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.sync-progress-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--sp-2);
+}
+
+.sync-progress-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+/* ── Steps ───────────────────────────────────────────────────────── */
+.sync-step {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 26px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-sm);
+}
+.sync-step--running { background: var(--accent-subtle); }
+.sync-step--failed  { background: var(--error-dim); }
+
+.sync-step-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sync-step--pending  .sync-step-indicator { background: var(--border-strong); }
+.sync-step--running  .sync-step-indicator { background: var(--accent); }
+.sync-step--success  .sync-step-indicator { background: var(--success); }
+.sync-step--warning  .sync-step-indicator { background: var(--warning); }
+.sync-step--failed   .sync-step-indicator { background: var(--error); }
+.sync-step--skipped  .sync-step-indicator { background: var(--border-strong); }
+
+.sync-step-label {
+  font-size: var(--text-sm);
+  flex: 1;
+  color: var(--text-secondary);
+}
+.sync-step--running .sync-step-label { color: var(--text-primary); }
+.sync-step--success .sync-step-label { color: var(--text-secondary); }
+.sync-step--failed  .sync-step-label { color: var(--error); }
+.sync-step--pending .sync-step-label,
+.sync-step--skipped .sync-step-label { color: var(--text-disabled); }
+
+.sync-step-detail {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.sync-spinner {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--accent);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Error box ───────────────────────────────────────────────────── */
+.sync-error-box {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--error);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.sync-error-title {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.sync-error-files {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sync-error-file {
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+.sync-restore-hint {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-2);
+  margin-top: 2px;
+}
+
+.sync-restore-link {
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+}
+
+/* ── Conflicts ───────────────────────────────────────────────────── */
+.conflict-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.conflict-section-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--status-conflicted);
+  padding: var(--sp-1) 0;
+}
+
+.conflict-item {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--status-conflicted);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-3) var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.conflict-path {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.conflict-warning {
+  font-size: var(--text-xs);
+  color: var(--status-conflicted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.conflict-actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+/* ── LFS problems ────────────────────────────────────────────────── */
+.sync-lfs-section-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--error);
+  padding: var(--sp-1) 0;
+}
+
+.lfs-problem-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--error);
+  border-radius: var(--radius-sm);
+}
+
+.lfs-problem-path {
+  flex: 1;
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.lfs-problem-sizes {
+  font-size: var(--text-xs);
+  color: var(--error);
+  flex-shrink: 0;
+}
+
+/* ── Unreal warning ──────────────────────────────────────────────── */
+.sync-unreal-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--unreal-dim);
+  border: 1px solid rgba(42, 159, 214, 0.2);
+  border-radius: var(--radius-sm);
+}
+
+.sync-unreal-warning-text {
+  flex: 1;
+}
+
+.sync-unreal-warning-title {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--unreal-accent);
+  margin-bottom: 2px;
+}
+
+.sync-unreal-warning-desc {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}

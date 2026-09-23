@@ -1,0 +1,133 @@
+.rsetup-tabs {
+  display: flex;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--sp-2);
+}
+
+.rsetup-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3);
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.rsetup-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.rsetup-tab.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.rsetup-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.rsetup-hint {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 0 0 var(--sp-4);
+  line-height: 1.5;
+}
+
+.rsetup-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-1);
+}
+
+.rsetup-input {
+  width: 100%;
+  height: var(--input-h);
+  padding: 0 var(--sp-3);
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.rsetup-input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.rsetup-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.rsetup-link {
+  color: var(--accent);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.rsetup-link:hover {
+  text-decoration: underline;
+}
+
+.rsetup-success-icon {
+  font-size: 28px;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: var(--sp-3);
+}
+
+.rsetup-success-text {
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.5;
+  margin: 0 0 var(--sp-2);
+}
+
+.rsetup-manage-url {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  overflow: hidden;
+}
+
+.rsetup-error {
+  margin-top: var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--error-dim);
+  border-left: 3px solid var(--error);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  color: var(--error);
+  line-height: 1.4;
+}

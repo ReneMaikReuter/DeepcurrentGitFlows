@@ -1,0 +1,38 @@
+.progress-bar-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+.progress-bar-fill--done {
+  background: var(--success);
+  animation: progress-fade 1.2s ease forwards;
+}
+
+@keyframes progress-fade {
+  0%   { opacity: 1; }
+  60%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.progress-bar-fill--indeterminate {
+  animation: progress-indeterminate 1.4s ease-in-out infinite;
+  width: 40% !important;
+  transform-origin: left;
+}
+
+@keyframes progress-indeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}

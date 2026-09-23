@@ -1,0 +1,201 @@
+.gh-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-8);
+  color: var(--text-secondary);
+}
+
+.gh-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+}
+
+.gh-login-icon { color: var(--text-secondary); }
+
+.gh-login-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.gh-login-desc {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+.gh-login-btn {
+  margin-top: var(--sp-2);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.gh-polling {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+}
+
+.gh-polling-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.gh-polling-desc {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.gh-user-code {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: var(--accent);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-focus);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3) var(--sp-6);
+  font-family: monospace;
+  user-select: all;
+}
+
+.gh-polling-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.gh-repos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.gh-repos-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gh-user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.gh-username {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.gh-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.gh-search-icon {
+  position: absolute;
+  left: 8px;
+  color: var(--text-disabled);
+  pointer-events: none;
+}
+
+.gh-search-input {
+  width: 100%;
+  padding: 6px 8px 6px 28px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--text-xs);
+  outline: none;
+}
+
+.gh-search-input:focus { border-color: var(--border-focus); }
+
+.gh-repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.gh-repo-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary);
+  transition: background 0.1s;
+}
+
+.gh-repo-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-default);
+}
+
+.gh-repo-main {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.gh-repo-lock { color: var(--text-disabled); flex-shrink: 0; }
+
+.gh-repo-name {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.gh-repo-lang {
+  font-size: 10px;
+  color: var(--text-disabled);
+  background: var(--bg-elevated);
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: auto;
+}
+
+.gh-repo-desc {
+  font-size: 10px;
+  color: var(--text-secondary);
+  padding-left: 18px;
+}
+
+.gh-empty {
+  font-size: var(--text-xs);
+  color: var(--text-disabled);
+  text-align: center;
+  padding: var(--sp-4);
+}
+
+.gh-error {
+  font-size: var(--text-xs);
+  color: var(--error);
+  background: rgba(var(--error-rgb, 255, 80, 80), 0.08);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-2) var(--sp-3);
+}

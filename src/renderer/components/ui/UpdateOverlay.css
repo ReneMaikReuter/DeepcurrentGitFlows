@@ -125,3 +125,19 @@
   background: var(--border);
   flex-shrink: 0;
 }
+
+.update-overlay-dismiss {
+  margin-top: var(--sp-2);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: var(--text-xs, 11px);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius);
+}
+
+.update-overlay-dismiss:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}

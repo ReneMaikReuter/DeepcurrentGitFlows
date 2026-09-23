@@ -30,7 +30,7 @@ const SIDEBAR_DEFAULT = 210
 
 export function MainView() {
   const { currentRepo, health, refreshStatus, changedFiles } = useRepoStore()
-  const { state: updater, checkForUpdates, installNow } = useUpdater()
+  const { state: updater, checkForUpdates, installNow, dismiss } = useUpdater()
   const [activeTab, setActiveTab] = useState<'changes' | 'sync' | 'history' | 'team'>('changes')
   const [ueRunning, setUeRunning] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -93,11 +93,12 @@ export function MainView() {
     <div className="main-layout-root">
       <ProgressBar />
       <ToastContainer />
-      {(updater.updateAvailable || updater.updateDownloaded) && updater.version && (
+      {(updater.updateAvailable || updater.updateDownloaded) && updater.version && !updater.dismissed && (
         <UpdateOverlay
           version={updater.version}
           downloadProgress={updater.downloadProgress}
           onInstall={installNow}
+          onDismiss={dismiss}
         />
       )}
       {/* Titlebar */}

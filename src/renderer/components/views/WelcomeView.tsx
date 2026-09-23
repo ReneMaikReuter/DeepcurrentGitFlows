@@ -14,7 +14,7 @@ import './WelcomeView.css'
 export function WelcomeView() {
   const t = useT()
   const { savedRepos, loadSavedRepos, openRepository, isLoading, error, clearError } = useRepoStore()
-  const { state: updater, checkForUpdates, installNow } = useUpdater()
+  const { state: updater, checkForUpdates, installNow, dismiss } = useUpdater()
   const [showClone, setShowClone] = useState(false)
   const [showGitHub, setShowGitHub] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -37,8 +37,8 @@ export function WelcomeView() {
 
   return (
     <div className="welcome">
-      {(updater.updateAvailable || updater.updateDownloaded) && updater.version && (
-        <UpdateOverlay version={updater.version} downloadProgress={updater.downloadProgress} onInstall={installNow} />
+      {(updater.updateAvailable || updater.updateDownloaded) && updater.version && !updater.dismissed && (
+        <UpdateOverlay version={updater.version} downloadProgress={updater.downloadProgress} onInstall={installNow} onDismiss={dismiss} />
       )}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} onCheckUpdate={checkForUpdates} noUpdate={updater.noUpdate} />}
       <div className="titlebar">

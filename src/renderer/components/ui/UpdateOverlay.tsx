@@ -5,54 +5,56 @@ interface Props {
   version: string
   downloadProgress: number | null
   onInstall: () => void
+  onDismiss: () => void
 }
 
 type Phase = 'downloading' | 'installing'
 
-export function UpdateOverlay({ version, downloadProgress, onInstall }: Props) {
+export function UpdateOverlay({ version, downloadProgress, onInstall, onDismiss }: Props) {
   const [phase, setPhase] = useState<Phase>('downloading')
   const [countdown, setCountdown] = useState(5)
   const [simulatedPct, setSimulatedPct] = useState(2)
+  const [showManualInstall, setShowManualInstall] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const simRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Simulate download progress — fast early, slows to a crawl near 99
+  const switchToInstalling = () => {
+    if (simRef.current) clearInterval(simRef.current)
+    setSimulatedPct(100)
+    setPhase('installing')
+  }
+
+  // Simulate download progress — fast early, slows near 99
   useEffect(() => {
     simRef.current = setInterval(() => {
       setSimulatedPct((p) => {
         if (p >= 99) return 99
-        // Slow down as we approach 99 so it never visually freezes
-        const step = p < 60 ? Math.random() * 3 : p < 85 ? Math.random() * 1.2 : Math.random() * 0.2
+        const step = p < 60 ? Math.random() * 3 : p < 85 ? Math.random() * 1.2 : Math.random() * 0.15
         return Math.min(99, p + step)
       })
     }, 600)
     return () => { if (simRef.current) clearInterval(simRef.current) }
   }, [])
 
-  // Real progress jumps ahead of simulated; 100 = download done
+  // Real progress event
   useEffect(() => {
     if (downloadProgress != null && downloadProgress > 0) {
       setSimulatedPct((p) => Math.max(p, downloadProgress))
     }
-    if (downloadProgress === 100) {
-      if (simRef.current) clearInterval(simRef.current)
-      setSimulatedPct(100)
-      setTimeout(() => setPhase('installing'), 400)
-    }
+    if (downloadProgress === 100) switchToInstalling()
   }, [downloadProgress])
 
-  // Fallback: if update-downloaded event never arrives, switch after 45s
+  // Fallback: if stuck at 99 for 20s, switch anyway
   useEffect(() => {
     const t = setTimeout(() => {
-      setPhase((p) => {
-        if (p === 'downloading') {
-          if (simRef.current) clearInterval(simRef.current)
-          setSimulatedPct(100)
-          return 'installing'
-        }
-        return p
-      })
-    }, 45000)
+      setPhase((p) => { if (p === 'downloading') { switchToInstalling(); return 'installing' } return p })
+    }, 20000)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Show manual install button after 10s in case event never arrives
+  useEffect(() => {
+    const t = setTimeout(() => setShowManualInstall(true), 10000)
     return () => clearTimeout(t)
   }, [])
 
@@ -72,7 +74,6 @@ export function UpdateOverlay({ version, downloadProgress, onInstall }: Props) {
 
   return (
     <div className="update-overlay">
-      {/* Top progress bar */}
       <div className="update-overlay-progress-track">
         <div
           className="update-overlay-progress-fill"
@@ -85,14 +86,13 @@ export function UpdateOverlay({ version, downloadProgress, onInstall }: Props) {
         <div className="update-overlay-title">Update verfügbar</div>
         <div className="update-overlay-version">Version {version}</div>
 
-        {/* Phase indicator */}
         <div className="update-overlay-phases">
           <div className={`update-overlay-phase ${phase === 'downloading' ? 'active' : 'done'}`}>
             <span className="update-overlay-phase-dot" />
             Download
           </div>
           <div className="update-overlay-phase-line" />
-          <div className={`update-overlay-phase ${phase === 'installing' ? 'active' : phase === 'downloading' ? 'pending' : 'done'}`}>
+          <div className={`update-overlay-phase ${phase === 'installing' ? 'active' : 'pending'}`}>
             <span className="update-overlay-phase-dot" />
             Installation
           </div>
@@ -102,6 +102,11 @@ export function UpdateOverlay({ version, downloadProgress, onInstall }: Props) {
           <>
             <div className="update-overlay-label">Wird heruntergeladen…</div>
             <div className="update-overlay-pct">{displayPct}%</div>
+            {showManualInstall && (
+              <button className="btn btn-primary btn-sm" style={{ marginTop: 8 }} onClick={switchToInstalling}>
+                Jetzt installieren
+              </button>
+            )}
           </>
         )}
 
@@ -115,6 +120,10 @@ export function UpdateOverlay({ version, downloadProgress, onInstall }: Props) {
             </button>
           </>
         )}
+
+        <button className="update-overlay-dismiss" onClick={onDismiss} title="Abbrechen — später installieren">
+          Abbrechen
+        </button>
       </div>
     </div>
   )

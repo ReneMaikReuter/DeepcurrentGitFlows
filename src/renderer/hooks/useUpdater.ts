@@ -7,6 +7,7 @@ export interface UpdaterState {
   downloadProgress: number | null
   error: string | null
   noUpdate: boolean
+  dismissed: boolean
 }
 
 export function useUpdater() {
@@ -17,6 +18,7 @@ export function useUpdater() {
     downloadProgress: null,
     error: null,
     noUpdate: false,
+    dismissed: false,
   })
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export function useUpdater() {
   }, [])
 
   const checkForUpdates = () => {
-    setState((s) => ({ ...s, noUpdate: false, error: null }))
+    setState((s) => ({ ...s, noUpdate: false, error: null, dismissed: false }))
     ;(window as any).deepcurrent?.invoke('updater:check')
   }
 
@@ -72,5 +74,9 @@ export function useUpdater() {
     ;(window as any).deepcurrent?.send('updater:install-now')
   }
 
-  return { state, checkForUpdates, installNow }
+  const dismiss = () => {
+    setState((s) => ({ ...s, dismissed: true }))
+  }
+
+  return { state, checkForUpdates, installNow, dismiss }
 }

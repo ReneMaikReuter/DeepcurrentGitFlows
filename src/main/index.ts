@@ -92,26 +92,44 @@ function setupAutoUpdater(): void {
   const isDev = process.env.NODE_ENV === 'development' || !!process.env.VITE_DEV_SERVER_URL
   if (isDev) return
 
-  autoUpdater.autoDownload = true
+  // Write updater events to log file for diagnosis
+  const logFile = path.join(app.getPath('userData'), 'updater.log')
+  const writeLog = (msg: string) => {
+    try {
+      const line = `[${new Date().toISOString()}] ${msg}\n`
+      require('fs').appendFileSync(logFile, line)
+    } catch {}
+  }
+
+  autoUpdater.autoDownload = false  // manual download so we control the flow
   autoUpdater.autoInstallOnAppQuit = false
   autoUpdater.logger = null
 
   autoUpdater.on('update-available', (info) => {
+    writeLog(`update-available: ${info.version}`)
     updaterState.updateAvailable = true
     updaterState.version = info.version
     mainWindow?.webContents.send('updater:update-available', info.version)
+    // Start download now
+    autoUpdater.downloadUpdate().catch((e) => {
+      writeLog(`downloadUpdate error: ${e?.message ?? e}`)
+      mainWindow?.webContents.send('updater:error', String(e?.message ?? e))
+    })
   })
 
   autoUpdater.on('update-not-available', () => {
+    writeLog('update-not-available')
     mainWindow?.webContents.send('updater:no-update')
   })
 
   autoUpdater.on('download-progress', (progress) => {
+    writeLog(`download-progress: ${Math.round(progress.percent)}% (${progress.transferred}/${progress.total} bytes)`)
     updaterState.downloadProgress = Math.round(progress.percent)
     mainWindow?.webContents.send('updater:download-progress', updaterState.downloadProgress)
   })
 
   autoUpdater.on('update-downloaded', (info) => {
+    writeLog(`update-downloaded: ${info.version}`)
     updaterState.updateDownloaded = true
     updaterState.downloadProgress = 100
     updaterState.version = info.version
@@ -119,15 +137,22 @@ function setupAutoUpdater(): void {
   })
 
   autoUpdater.on('error', (err) => {
+    writeLog(`error: ${err?.message ?? err}`)
     mainWindow?.webContents.send('updater:error', err.message)
   })
 
   ipcMain.on('updater:install-now', () => {
+    writeLog(`install-now requested, downloaded=${updaterState.updateDownloaded}`)
     if (updaterState.updateDownloaded) {
       autoUpdater.quitAndInstall(false, true)
     } else {
-      // Not ready yet — notify renderer so it can show waiting state
       mainWindow?.webContents.send('updater:not-ready')
+    }
+  })
+
+  ipcMain.handle('shell:open-external', (_, url: string) => {
+    if (typeof url === 'string' && url.startsWith('https://github.com/')) {
+      shell.openExternal(url)
     }
   })
 

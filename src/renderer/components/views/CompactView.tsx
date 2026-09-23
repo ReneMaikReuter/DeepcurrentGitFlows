@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function CompactView({ onSwitchToPro }: Props) {
-  const { currentRepo, health, changedFiles, selectedFiles, toggleFile, selectAll, commit, sync, isSyncing, branches } = useRepoStore()
+  const { currentRepo, health, changedFiles, selectedFiles, toggleFileSelection, selectAllFiles, deselectAllFiles, commit, startSync, isSyncing, branches } = useRepoStore()
   const { state: updater, checkForUpdates, installNow, dismiss } = useUpdater()
   const [message, setMessage] = useState('')
   const [committing, setCommitting] = useState(false)
@@ -55,7 +55,7 @@ export function CompactView({ onSwitchToPro }: Props) {
   }, [])
 
   const handleCommit = async () => {
-    if (!message.trim() || selectedFiles.length === 0) return
+    if (!message.trim() || selectedFiles.size === 0) return
     setCommitting(true)
     await commit(message.trim(), false)
     setMessage('')
@@ -63,10 +63,10 @@ export function CompactView({ onSwitchToPro }: Props) {
   }
 
   const handleSync = async () => {
-    await sync()
+    await startSync()
   }
 
-  const allSelected = changedFiles.length > 0 && selectedFiles.length === changedFiles.length
+  const allSelected = changedFiles.length > 0 && selectedFiles.size === changedFiles.length
 
   if (!currentRepo) return null
 
@@ -140,7 +140,7 @@ export function CompactView({ onSwitchToPro }: Props) {
                 <input
                   type="checkbox"
                   checked={allSelected}
-                  onChange={() => selectAll(!allSelected)}
+                  onChange={() => allSelected ? deselectAllFiles() : selectAllFiles()}
                 />
                 <span>Alle auswaehlen ({changedFiles.length})</span>
               </label>
@@ -150,8 +150,8 @@ export function CompactView({ onSwitchToPro }: Props) {
                 <label key={f.path} className="compact-file-row">
                   <input
                     type="checkbox"
-                    checked={selectedFiles.includes(f.path)}
-                    onChange={() => toggleFile(f.path)}
+                    checked={selectedFiles.has(f.path)}
+                    onChange={() => toggleFileSelection(f.path)}
                   />
                   <span className={`compact-file-status compact-file-status--${f.status}`}>{f.status.toUpperCase().slice(0, 1)}</span>
                   <span className="compact-file-path truncate">{f.path.split('/').pop() ?? f.path}</span>
@@ -177,10 +177,10 @@ export function CompactView({ onSwitchToPro }: Props) {
         <button
           className="btn btn-primary compact-commit-btn"
           onClick={handleCommit}
-          disabled={!message.trim() || selectedFiles.length === 0 || committing}
+          disabled={!message.trim() || selectedFiles.size === 0 || committing}
         >
           <Upload size={12} strokeWidth={2} />
-          {committing ? 'Wird committet...' : `Commit (${selectedFiles.length})`}
+          {committing ? 'Wird committet...' : `Commit (${selectedFiles.size})`}
         </button>
       </div>
     </div>

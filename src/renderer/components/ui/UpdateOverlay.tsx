@@ -15,6 +15,7 @@ export function UpdateOverlay({ version, downloadProgress, updateDownloaded, onI
   const [phase, setPhase] = useState<Phase>('downloading')
   const [countdown, setCountdown] = useState(5)
   const [simulatedPct, setSimulatedPct] = useState(2)
+  const [showFallback, setShowFallback] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const simRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -47,6 +48,12 @@ export function UpdateOverlay({ version, downloadProgress, updateDownloaded, onI
       setSimulatedPct((p) => Math.max(p, downloadProgress))
     }
   }, [downloadProgress])
+
+  // After 30s stuck in download phase, show manual fallback link
+  useEffect(() => {
+    const t = setTimeout(() => { if (phase === 'downloading') setShowFallback(true) }, 30000)
+    return () => clearTimeout(t)
+  }, [phase])
 
   // Countdown for auto-install
   useEffect(() => {
@@ -92,6 +99,17 @@ export function UpdateOverlay({ version, downloadProgress, updateDownloaded, onI
           <>
             <div className="update-overlay-label">Wird heruntergeladen…</div>
             <div className="update-overlay-pct">{displayPct}%</div>
+            {showFallback && (
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', textAlign: 'center', marginTop: 4 }}>
+                Download dauert zu lange?{' '}
+                <button
+                  style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: 11, textDecoration: 'underline', padding: 0 }}
+                  onClick={() => (window as any).deepcurrent?.invoke('shell:open-external', 'https://github.com/ReneMaikReuter/DeepcurrentGitFlows/releases/latest')}
+                >
+                  Manuell herunterladen
+                </button>
+              </div>
+            )}
           </>
         )}
 

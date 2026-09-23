@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Shield, Settings } from 'lucide-react'
+import { Shield, Settings, Layers } from 'lucide-react'
 import { useRepoStore } from '../../store/repoStore'
 import { ipc, IPC } from '../../hooks/useIpc'
 import { SettingsModal } from '../ui/SettingsModal'
@@ -28,7 +28,11 @@ const SIDEBAR_MIN = 160
 const SIDEBAR_MAX = 400
 const SIDEBAR_DEFAULT = 210
 
-export function MainView() {
+interface Props {
+  onSwitchToCompact: () => void
+}
+
+export function MainView({ onSwitchToCompact }: Props) {
   const { currentRepo, health, refreshStatus, changedFiles } = useRepoStore()
   const { state: updater, checkForUpdates, installNow, dismiss } = useUpdater()
   const [activeTab, setActiveTab] = useState<'changes' | 'sync' | 'history' | 'team'>('changes')
@@ -118,6 +122,18 @@ export function MainView() {
           <HealthBar compact />
           <button className="btn-icon titlebar-settings-btn" onClick={() => setSettingsOpen(true)} title="Einstellungen">
             <Settings size={14} strokeWidth={2} />
+          </button>
+          <button
+            className="compact-mode-switch"
+            onClick={onSwitchToCompact}
+            title="Kompakt-Modus aktivieren"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: '1px solid var(--border)', borderRadius: 20, padding: '2px 8px 2px 10px', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600, WebkitAppRegion: 'no-drag' as any }}
+          >
+            <Layers size={11} strokeWidth={2} />
+            <span style={{ fontSize: 11 }}>Pro</span>
+            <span style={{ width: 26, height: 14, borderRadius: 7, background: 'var(--accent)', position: 'relative', flexShrink: 0, display: 'inline-block' }}>
+              <span style={{ position: 'absolute', top: 2, right: 2, width: 10, height: 10, borderRadius: '50%', background: '#fff', display: 'block' }} />
+            </span>
           </button>
         </div>
         <WindowControls />

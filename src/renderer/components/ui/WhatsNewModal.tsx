@@ -9,14 +9,22 @@ interface ChangeEntry {
 
 const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.2.1',
+    date: '23. September 2026',
+    changes: [
+      'Kompakt-Modus: reduzierte Ansicht mit Dateiliste, Commit und Sync',
+      'Pro-Modus: vollstaendige Ansicht mit Sidebar, Tabs, History und Team',
+      'Modus-Umschalter oben rechts in der Titelleiste',
+      'Auswahl wird gespeichert und beim naechsten Start beibehalten',
+    ],
+  },
+  {
     version: '0.2.0',
     date: '23. September 2026',
     changes: [
       'Nutzungsbedingungen und Datenschutzhinweis beim ersten Programmstart',
       'Was-ist-neu-Anzeige nach jedem Update mit Versionshistorie',
       'Update-Download wird zuverlaessig per Polling erkannt',
-      'Neustart-Button funktioniert nur wenn Download abgeschlossen',
-      'Abbrechen-Button im Update-Fenster',
     ],
   },
   {

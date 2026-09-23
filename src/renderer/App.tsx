@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRepoStore } from './store/repoStore'
 import { WelcomeView } from './components/views/WelcomeView'
 import { MainView } from './components/views/MainView'
+import { CompactView } from './components/views/CompactView'
 import { TermsModal } from './components/ui/TermsModal'
 import { WhatsNewModal } from './components/ui/WhatsNewModal'
 import { ipc, IPC } from './hooks/useIpc'
@@ -9,13 +10,16 @@ import type { AppSettings } from '../shared/types'
 import './styles/app.css'
 import './components/ui/WhatsNewModal.css'
 
-const CURRENT_VERSION = '0.2.0'
+const CURRENT_VERSION = '0.2.1'
 
 export function App() {
   const { currentRepo, loadSavedRepos } = useRepoStore()
   const [showTerms, setShowTerms] = useState(false)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
   const [ready, setReady] = useState(false)
+  const [compactMode, setCompactMode] = useState(() => {
+    try { return localStorage.getItem('compactMode') === 'true' } catch { return false }
+  })
 
   useEffect(() => {
     loadSavedRepos()
@@ -58,7 +62,12 @@ export function App() {
       {!showTerms && showWhatsNew && (
         <WhatsNewModal version={CURRENT_VERSION} onClose={() => setShowWhatsNew(false)} />
       )}
-      {currentRepo ? <MainView /> : <WelcomeView />}
+      {currentRepo
+        ? compactMode
+          ? <CompactView onSwitchToPro={() => { setCompactMode(false); localStorage.setItem('compactMode', 'false') }} />
+          : <MainView onSwitchToCompact={() => { setCompactMode(true); localStorage.setItem('compactMode', 'true') }} />
+        : <WelcomeView />
+      }
     </div>
   )
 }

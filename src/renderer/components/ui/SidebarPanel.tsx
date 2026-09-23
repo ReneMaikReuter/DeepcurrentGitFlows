@@ -56,7 +56,7 @@ export function SidebarPanel() {
   // exists in git symbolic-ref but has no commits yet), show it as a stub.
   const displayBranches =
     localBranches.length === 0 && currentBranch
-      ? [{ name: currentBranch, isCurrent: true, isRemote: false, upstream: null, aheadBy: 0, behindBy: 0, lastCommitHash: null, lastCommitMessage: null, lastCommitAuthor: null, lastCommitDate: null }]
+      ? [{ name: currentBranch, isCurrent: true, isRemote: false, upstream: null, aheadBy: 0, behindBy: 0, lastCommitHash: null, lastCommitMessage: null, lastCommitAuthor: null, lastCommitDate: null, parentBranch: null }]
       : localBranches
 
   const handlePushBranch = async () => {
@@ -202,10 +202,14 @@ export function SidebarPanel() {
     }
     if (!currentRepo) return
     setDeletingBranch(true)
-    await ipc.invoke(IPC.BRANCH_DELETE, currentRepo.path, name, true, true)
+    const res = await ipc.invoke<{ success: boolean; error: string | null }>(IPC.BRANCH_DELETE, currentRepo.path, name, true, true)
     setDeletingBranch(false)
     setConfirmDeleteBranch(null)
-    await refreshBranches()
+    if (res && !res.success && res.error) {
+      toast.err(res.error)
+    } else {
+      await refreshBranches()
+    }
   }
 
   const handleDeleteRemoteBranch = async (fullName: string) => {
@@ -323,7 +327,12 @@ export function SidebarPanel() {
               >
                 <span className={`branch-indicator${isDirty ? ' branch-indicator--dirty' : ''}`} />
                 <GitBranch size={12} strokeWidth={1.8} style={{ flexShrink: 0, color: branch.isCurrent ? 'var(--accent)' : 'var(--text-secondary)' }} />
-                <span className="branch-name truncate">{branch.name}</span>
+                <span className="branch-name-wrap">
+                  <span className="branch-name truncate">{branch.name}</span>
+                  {branch.parentBranch && !branch.isCurrent && (
+                    <span className="branch-parent">von {branch.parentBranch}</span>
+                  )}
+                </span>
                 {branch.isCurrent && (
                   <span className="branch-badge">
                     {branch.aheadBy > 0 && (

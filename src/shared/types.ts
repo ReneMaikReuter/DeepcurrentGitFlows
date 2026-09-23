@@ -53,6 +53,7 @@ export interface Branch {
   lastCommitMessage: string | null
   lastCommitAuthor: string | null
   lastCommitDate: number | null
+  parentBranch: string | null
 }
 
 // ─── File Changes ──────────────────────────────────────────────────────────────

@@ -9,6 +9,15 @@ interface ChangeEntry {
 
 const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.2.5',
+    date: '23. September 2026',
+    changes: [
+      'Branch-Liste: zeigt von welchem Branch ein Branch erstellt wurde',
+      'History: origin/*-Refs ausgeblendet, Badges nicht mehr überlappend',
+      'Geschützter Branch: Fehlermeldung beim Versuch zu löschen',
+    ],
+  },
+  {
     version: '0.2.4',
     date: '23. September 2026',
     changes: [

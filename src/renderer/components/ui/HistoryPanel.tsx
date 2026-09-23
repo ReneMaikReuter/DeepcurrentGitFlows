@@ -130,7 +130,7 @@ function CommitRow({ commit, isHead, query, onRestoreFiles, onUndoCommit, onReve
             : <span className="history-badge history-badge--local"><HardDrive size={10} /> {tFn('history_local')}</span>
           }
           {isHead && <span className="history-badge history-badge--head">HEAD</span>}
-          {(commit.branches ?? []).map((b) => (
+          {(commit.branches ?? []).filter(b => !b.startsWith('origin/')).map((b) => (
             <span key={b} className={`history-badge history-badge--branch ${query && b.toLowerCase().includes(query.toLowerCase()) ? 'history-badge--match' : ''}`} title={b}>
               <Highlight text={b} query={query} />
             </span>

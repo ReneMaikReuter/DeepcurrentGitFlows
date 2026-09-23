@@ -122,6 +122,7 @@
   cursor: pointer;
   border-radius: var(--radius);
   transition: background 0.1s;
+  flex-wrap: wrap;
 }
 
 .history-commit-header:hover {
@@ -179,7 +180,12 @@
 .history-badges {
   display: flex;
   gap: 4px;
+  flex-wrap: wrap;
   flex-shrink: 0;
+  order: 3;
+  width: 100%;
+  padding-left: 36px;
+  margin-top: -2px;
 }
 
 .history-badge {

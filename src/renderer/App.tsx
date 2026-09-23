@@ -10,7 +10,7 @@ import type { AppSettings } from '../shared/types'
 import './styles/app.css'
 import './components/ui/WhatsNewModal.css'
 
-const CURRENT_VERSION = '0.2.4'
+const CURRENT_VERSION = '0.2.5'
 
 export function App() {
   const { currentRepo, loadSavedRepos } = useRepoStore()
@@ -62,12 +62,16 @@ export function App() {
       {!showTerms && showWhatsNew && (
         <WhatsNewModal version={CURRENT_VERSION} onClose={() => setShowWhatsNew(false)} />
       )}
-      {currentRepo
-        ? compactMode
-          ? <CompactView onSwitchToPro={() => { setCompactMode(false); localStorage.setItem('compactMode', 'false') }} />
-          : <MainView onSwitchToCompact={() => { setCompactMode(true); localStorage.setItem('compactMode', 'true') }} />
-        : <WelcomeView />
-      }
+      {currentRepo ? (
+        <>
+          <div style={{ display: compactMode ? 'contents' : 'none' }}>
+            <CompactView onSwitchToPro={() => { setCompactMode(false); localStorage.setItem('compactMode', 'false') }} />
+          </div>
+          <div style={{ display: compactMode ? 'none' : 'contents' }}>
+            <MainView onSwitchToCompact={() => { setCompactMode(true); localStorage.setItem('compactMode', 'true') }} />
+          </div>
+        </>
+      ) : <WelcomeView />}
     </div>
   )
 }

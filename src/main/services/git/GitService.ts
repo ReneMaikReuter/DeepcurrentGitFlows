@@ -131,6 +131,20 @@ export class GitService {
         }
       }
 
+      let parentBranch: string | null = null
+      if (!isRemote) {
+        const reflog = await this.executor.git(['reflog', 'show', cleanName, '--format=%gs', '-20'])
+        if (reflog.success) {
+          for (const entry of reflog.stdout.split('\n')) {
+            const m = entry.match(/branch: (?:Created from|renamed from|reset:.*to) (.+)/)
+            if (m) {
+              const raw = m[1].trim().replace(/^origin\//, '')
+              if (raw !== cleanName) { parentBranch = raw; break }
+            }
+          }
+        }
+      }
+
       branches.push({
         name: cleanName,
         isCurrent: cleanName === currentBranch,
@@ -142,6 +156,7 @@ export class GitService {
         lastCommitMessage: subject || null,
         lastCommitAuthor: author || null,
         lastCommitDate: dateStr ? parseInt(dateStr) * 1000 : null,
+        parentBranch,
       })
     }
 

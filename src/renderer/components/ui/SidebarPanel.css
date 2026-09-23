@@ -259,9 +259,24 @@
   white-space: nowrap;
 }
 
-.branch-name {
+.branch-name-wrap {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.branch-name {
+  min-width: 0;
+}
+
+.branch-parent {
+  font-size: 10px;
+  color: var(--text-disabled);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .branch-badge {

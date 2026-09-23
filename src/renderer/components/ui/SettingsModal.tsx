@@ -9,6 +9,15 @@ import './SettingsModal.css'
 
 const CHANGELOG_ENTRIES = [
   {
+    version: '0.2.5',
+    date: '23. September 2026',
+    changes: [
+      'Branch-Liste: zeigt jetzt an von welchem Branch ein Branch erstellt wurde',
+      'History: origin/*-Refs ausgeblendet, Badges in zweite Zeile verschoben',
+      'Geschützter Branch löschen: Fehlermeldung als Toast unten rechts',
+    ],
+  },
+  {
     version: '0.2.4',
     date: '23. September 2026',
     changes: [

@@ -27,13 +27,13 @@ export function WindowControls() {
       </button>
       <button className="wc-btn wc-maximize" title={maximized ? 'Wiederherstellen' : 'Maximieren'} onClick={() => invoke('window:maximize')}>
         {maximized ? (
-          <svg width="10" height="10" viewBox="0 0 10 10">
-            <rect x="2" y="0" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="1"/>
-            <rect x="0" y="2" width="8" height="8" fill="var(--bg-surface)" stroke="currentColor" strokeWidth="1"/>
+          <svg width="11" height="11" viewBox="0 0 11 11">
+            <rect x="3" y="0" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            <rect x="0" y="3" width="8" height="8" fill="var(--bg-surface)" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
           </svg>
         ) : (
-          <svg width="10" height="10" viewBox="0 0 10 10">
-            <rect x="0" y="0" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1"/>
+          <svg width="11" height="11" viewBox="0 0 11 11">
+            <rect x="0.75" y="0.75" width="9.5" height="9.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
           </svg>
         )}
       </button>

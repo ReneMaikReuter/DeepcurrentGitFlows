@@ -86,6 +86,7 @@ function setupAutoUpdater(): void {
 
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = false
+  autoUpdater.logger = null
 
   autoUpdater.on('update-available', (info) => {
     mainWindow?.webContents.send('updater:update-available', info.version)

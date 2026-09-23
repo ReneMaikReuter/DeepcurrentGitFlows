@@ -35,14 +35,15 @@ export function UpdateOverlay({ version, downloadProgress, onInstall }: Props) {
   }, [ready])
 
   const pct = downloadProgress ?? 0
+  const indeterminate = pct === 0 && !ready
 
   return (
     <div className="update-overlay">
       <div className="update-overlay-progress-track">
-        <div className="update-overlay-progress-fill" style={{ width: `${pct}%` }} />
+        <div className={`update-overlay-progress-fill${indeterminate ? ' update-overlay-progress-fill--indeterminate' : ''}`} style={indeterminate ? {} : { width: `${pct}%` }} />
       </div>
       <div className="update-overlay-box">
-        <div className="update-overlay-icon">⬇</div>
+        <div className="update-overlay-icon update-overlay-icon--animated">⬇</div>
         <div className="update-overlay-title">Update verfügbar</div>
         <div className="update-overlay-version">Version {version}</div>
 

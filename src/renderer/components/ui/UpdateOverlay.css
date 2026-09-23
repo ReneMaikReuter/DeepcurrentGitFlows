@@ -90,3 +90,48 @@
   font-weight: 700;
   color: var(--text-primary);
 }
+
+.update-overlay-phases {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0;
+}
+
+.update-overlay-phase {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs, 11px);
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: color 0.3s ease;
+}
+
+.update-overlay-phase.active {
+  color: var(--accent);
+}
+
+.update-overlay-phase.done {
+  color: var(--success, #4caf50);
+}
+
+.update-overlay-phase-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.update-overlay-phase.pending .update-overlay-phase-dot {
+  background: var(--border);
+}
+
+.update-overlay-phase-line {
+  width: 32px;
+  height: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+}

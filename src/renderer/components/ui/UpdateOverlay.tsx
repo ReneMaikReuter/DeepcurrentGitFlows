@@ -4,17 +4,17 @@ import './UpdateOverlay.css'
 interface Props {
   version: string
   downloadProgress: number | null
+  updateDownloaded: boolean
   onInstall: () => void
   onDismiss: () => void
 }
 
 type Phase = 'downloading' | 'installing'
 
-export function UpdateOverlay({ version, downloadProgress, onInstall, onDismiss }: Props) {
+export function UpdateOverlay({ version, downloadProgress, updateDownloaded, onInstall, onDismiss }: Props) {
   const [phase, setPhase] = useState<Phase>('downloading')
   const [countdown, setCountdown] = useState(5)
   const [simulatedPct, setSimulatedPct] = useState(2)
-  const [showManualInstall, setShowManualInstall] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const simRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -36,27 +36,17 @@ export function UpdateOverlay({ version, downloadProgress, onInstall, onDismiss 
     return () => { if (simRef.current) clearInterval(simRef.current) }
   }, [])
 
-  // Real progress event
+  // Switch to install phase only when download is confirmed done
+  useEffect(() => {
+    if (updateDownloaded && phase === 'downloading') switchToInstalling()
+  }, [updateDownloaded])
+
+  // Real progress event as visual hint
   useEffect(() => {
     if (downloadProgress != null && downloadProgress > 0) {
       setSimulatedPct((p) => Math.max(p, downloadProgress))
     }
-    if (downloadProgress === 100) switchToInstalling()
   }, [downloadProgress])
-
-  // Fallback: if stuck at 99 for 20s, switch anyway
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setPhase((p) => { if (p === 'downloading') { switchToInstalling(); return 'installing' } return p })
-    }, 20000)
-    return () => clearTimeout(t)
-  }, [])
-
-  // Show manual install button after 10s in case event never arrives
-  useEffect(() => {
-    const t = setTimeout(() => setShowManualInstall(true), 10000)
-    return () => clearTimeout(t)
-  }, [])
 
   // Countdown for auto-install
   useEffect(() => {
@@ -102,11 +92,6 @@ export function UpdateOverlay({ version, downloadProgress, onInstall, onDismiss 
           <>
             <div className="update-overlay-label">Wird heruntergeladen…</div>
             <div className="update-overlay-pct">{displayPct}%</div>
-            {showManualInstall && (
-              <button className="btn btn-primary btn-sm" style={{ marginTop: 8 }} onClick={switchToInstalling}>
-                Jetzt installieren
-              </button>
-            )}
           </>
         )}
 

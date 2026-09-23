@@ -97,6 +97,7 @@ export function MainView() {
         <UpdateOverlay
           version={updater.version}
           downloadProgress={updater.downloadProgress}
+          updateDownloaded={updater.updateDownloaded}
           onInstall={installNow}
           onDismiss={dismiss}
         />

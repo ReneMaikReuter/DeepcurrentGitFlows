@@ -25,38 +25,42 @@ export function useUpdater() {
     const dc = (window as any).deepcurrent
     if (!dc?.on) return
 
-    // Query persisted state first — catches events that fired before React mounted
-    dc.invoke('updater:get-state').then((s: any) => {
+    const applyState = (s: any) => {
       if (!s) return
       if (s.updateDownloaded) {
         setState((prev) => ({ ...prev, updateAvailable: true, updateDownloaded: true, downloadProgress: 100, version: s.version }))
       } else if (s.updateAvailable) {
         setState((prev) => ({ ...prev, updateAvailable: true, version: s.version, downloadProgress: s.downloadProgress }))
       }
-    }).catch(() => {})
+    }
+
+    // Initial query
+    dc.invoke('updater:get-state').then(applyState).catch(() => {})
+
+    // Poll every 2s — electron-updater on Windows often doesn't fire events reliably
+    const poll = setInterval(() => {
+      dc.invoke('updater:get-state').then(applyState).catch(() => {})
+    }, 2000)
 
     const offAvailable = dc.on('updater:update-available', (version: string) => {
       setState((s) => ({ ...s, updateAvailable: true, version, noUpdate: false, error: null }))
     })
-
     const offProgress = dc.on('updater:download-progress', (pct: number) => {
       setState((s) => ({ ...s, downloadProgress: pct }))
     })
-
     const offDownloaded = dc.on('updater:update-downloaded', (version: string) => {
       setState((s) => ({ ...s, updateDownloaded: true, downloadProgress: 100, version }))
     })
-
     const offNoUpdate = dc.on('updater:no-update', () => {
       setState((s) => ({ ...s, noUpdate: true }))
       setTimeout(() => setState((s) => ({ ...s, noUpdate: false })), 3000)
     })
-
     const offError = dc.on('updater:error', (msg: string) => {
       setState((s) => ({ ...s, error: msg }))
     })
 
     return () => {
+      clearInterval(poll)
       offAvailable?.()
       offProgress?.()
       offDownloaded?.()

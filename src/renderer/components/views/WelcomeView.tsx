@@ -38,7 +38,7 @@ export function WelcomeView() {
   return (
     <div className="welcome">
       {(updater.updateAvailable || updater.updateDownloaded) && updater.version && !updater.dismissed && (
-        <UpdateOverlay version={updater.version} downloadProgress={updater.downloadProgress} onInstall={installNow} onDismiss={dismiss} />
+        <UpdateOverlay version={updater.version} downloadProgress={updater.downloadProgress} updateDownloaded={updater.updateDownloaded} onInstall={installNow} onDismiss={dismiss} />
       )}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} onCheckUpdate={checkForUpdates} noUpdate={updater.noUpdate} />}
       <div className="titlebar">

@@ -123,7 +123,12 @@ function setupAutoUpdater(): void {
   })
 
   ipcMain.on('updater:install-now', () => {
-    autoUpdater.quitAndInstall(false, true)
+    if (updaterState.updateDownloaded) {
+      autoUpdater.quitAndInstall(false, true)
+    } else {
+      // Not ready yet — notify renderer so it can show waiting state
+      mainWindow?.webContents.send('updater:not-ready')
+    }
   })
 
   // Renderer queries current state on mount — fixes race condition on fast connections

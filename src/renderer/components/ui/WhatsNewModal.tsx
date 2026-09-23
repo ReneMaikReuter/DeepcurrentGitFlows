@@ -9,6 +9,14 @@ interface ChangeEntry {
 
 const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.2.3',
+    date: '23. September 2026',
+    changes: [
+      'Nutzungsbedingungen: korrekte Bezeichnung als Einzelperson (René-Maik Reuter, Projektbezeichnung Deepcurrent Studio)',
+      'Rechtlicher Hinweis auf Unternehmensform entfernt (noch keine GmbH/UG)',
+    ],
+  },
+  {
     version: '0.2.1',
     date: '23. September 2026',
     changes: [
@@ -106,12 +114,9 @@ export function WhatsNewModal({ version, onClose }: Props) {
               <div key={entry.version} className="whatsnew-previous-entry">
                 <div className="whatsnew-previous-version">v{entry.version}</div>
                 <ul className="whatsnew-list whatsnew-list--small">
-                  {entry.changes.slice(0, 2).map((c, i) => (
+                  {entry.changes.map((c, i) => (
                     <li key={i}>{c}</li>
                   ))}
-                  {entry.changes.length > 2 && (
-                    <li className="whatsnew-more">+{entry.changes.length - 2} weitere</li>
-                  )}
                 </ul>
               </div>
             ))}

@@ -1,6 +1,6 @@
 {
   "name": "deepcurrent-git-client",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Deepcurrent Git Flows for Unreal Engine projects",
   "main": "dist-electron/main/index.js",
   "author": "Deepcurrent Studio",

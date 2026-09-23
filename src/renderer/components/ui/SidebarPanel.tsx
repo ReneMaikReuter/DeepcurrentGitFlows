@@ -15,6 +15,7 @@ export function SidebarPanel() {
   const [showCreateBranch, setShowCreateBranch] = useState(false)
   const [newBranchName, setNewBranchName] = useState('')
   const [createError, setCreateError] = useState<string | null>(null)
+  const [createFromBranch, setCreateFromBranch] = useState<string>('')
   const [switching, setSwitching] = useState(false)
   const [switchModal, setSwitchModal] = useState<{ branch: string; skipUeCheck: boolean } | null>(null)
   const [pushing, setPushing] = useState(false)
@@ -228,7 +229,7 @@ export function SidebarPanel() {
   const handleCreateBranch = async () => {
     if (!newBranchName.trim()) return
     setCreateError(null)
-    const from = currentBranch ?? 'HEAD'
+    const from = createFromBranch || currentBranch || 'HEAD'
     const result = await createBranch(newBranchName.trim(), from)
     if (result.success) {
       setNewBranchName('')
@@ -467,7 +468,19 @@ export function SidebarPanel() {
             }}
             autoFocus
           />
-          <div className="create-branch-from">{t('sidebar_from')} {currentBranch ?? 'HEAD'}</div>
+          <div className="create-branch-from" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span>{t('sidebar_from')}</span>
+            <select
+              className="settings-input-sm"
+              style={{ flex: 1, height: 22, fontSize: 'var(--text-xs)', padding: '0 4px' }}
+              value={createFromBranch || currentBranch || ''}
+              onChange={(e) => setCreateFromBranch(e.target.value)}
+            >
+              {localBranches.map((b) => (
+                <option key={b.name} value={b.name}>{b.name}</option>
+              ))}
+            </select>
+          </div>
           {createError && (
             <div style={{ fontSize: 'var(--text-xs)', color: 'var(--error)', lineHeight: 1.4 }}>
               {createError}

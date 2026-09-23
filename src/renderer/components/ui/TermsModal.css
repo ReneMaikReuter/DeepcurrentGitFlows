@@ -53,8 +53,8 @@
   flex-direction: column;
   gap: var(--sp-4);
   font-size: var(--text-sm);
-  color: var(--text-secondary);
-  line-height: 1.65;
+  color: var(--text-primary);
+  line-height: 1.75;
 }
 
 .terms-body section {

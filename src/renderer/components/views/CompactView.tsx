@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
-import { GitBranch, RefreshCw, Upload, Shield, Settings } from 'lucide-react'
+import { GitBranch, RefreshCw, Upload, Shield, Settings, ChevronDown } from 'lucide-react'
 import { useRepoStore } from '../../store/repoStore'
 import { ipc, IPC } from '../../hooks/useIpc'
 import { useLangStore, useT } from '../../i18n/useT'
 import { SettingsModal } from '../ui/SettingsModal'
+import { BranchSwitchModal } from '../ui/BranchSwitchModal'
 import { WindowControls } from '../ui/WindowControls'
 import { ProgressBar } from '../ui/ProgressBar'
 import { ToastContainer } from '../ui/ToastContainer'
 import { UpdateOverlay } from '../ui/UpdateOverlay'
 import { useUpdater } from '../../hooks/useUpdater'
+import { toast } from '../../store/toastStore'
 import type { AppSettings } from '../../../shared/types'
 import './CompactView.css'
 
@@ -22,12 +24,16 @@ interface Props {
 }
 
 export function CompactView({ onSwitchToPro }: Props) {
-  const { currentRepo, health, changedFiles, selectedFiles, toggleFileSelection, selectAllFiles, deselectAllFiles, commit, startSync, isSyncing, branches } = useRepoStore()
+  const { currentRepo, health, changedFiles, selectedFiles, toggleFileSelection, selectAllFiles, deselectAllFiles, commit, startSync, isSyncing, branches, switchBranch } = useRepoStore()
   const { state: updater, checkForUpdates, installNow, dismiss } = useUpdater()
   const [message, setMessage] = useState('')
   const [committing, setCommitting] = useState(false)
+  const [pushing, setPushing] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [ueRunning, setUeRunning] = useState(false)
+  const [branchMenuOpen, setBranchMenuOpen] = useState(false)
+  const [switchModal, setSwitchModal] = useState<string | null>(null)
+  const [switching, setSwitching] = useState(false)
   const { setLang } = useLangStore()
   const t = useT()
 
@@ -66,6 +72,25 @@ export function CompactView({ onSwitchToPro }: Props) {
     await startSync()
   }
 
+  const handlePush = async () => {
+    if (!currentRepo || !currentBranch?.name) return
+    setPushing(true)
+    const res = await ipc.invoke<{ success: boolean; error: string | null }>(IPC.BRANCH_PUSH, currentRepo.path, currentBranch.name)
+    setPushing(false)
+    if (res.success) toast.ok('Gepusht.')
+    else toast.err(res.error ?? 'Push fehlgeschlagen.')
+  }
+
+  const handleBranchSwitch = async (name: string) => {
+    setBranchMenuOpen(false)
+    if (name === currentBranch?.name) return
+    setSwitching(true)
+    const result = await switchBranch(name)
+    setSwitching(false)
+    if (result.requiresAction) setSwitchModal(name)
+    else if (result.error) toast.err(result.error)
+  }
+
   const allSelected = changedFiles.length > 0 && selectedFiles.size === changedFiles.length
 
   if (!currentRepo) return null
@@ -83,6 +108,10 @@ export function CompactView({ onSwitchToPro }: Props) {
           onInstall={installNow}
           onDismiss={dismiss}
         />
+      )}
+
+      {switchModal && (
+        <BranchSwitchModal targetBranch={switchModal} onClose={() => setSwitchModal(null)} />
       )}
 
       {/* Titlebar */}
@@ -113,11 +142,46 @@ export function CompactView({ onSwitchToPro }: Props) {
 
       {/* Branch + Sync strip */}
       <div className="compact-branch-bar">
-        <GitBranch size={11} strokeWidth={2} />
-        <span className="compact-branch-name">{currentBranch?.name ?? '...'}</span>
+        <div className="compact-branch-selector" style={{ position: 'relative' }}>
+          <button
+            className="compact-branch-btn"
+            onClick={() => setBranchMenuOpen((v) => !v)}
+            disabled={switching}
+            title="Branch wechseln"
+          >
+            <GitBranch size={11} strokeWidth={2} />
+            <span className="compact-branch-name">{currentBranch?.name ?? '...'}</span>
+            <ChevronDown size={10} strokeWidth={2} />
+          </button>
+          {branchMenuOpen && (
+            <div className="compact-branch-dropdown">
+              {branches.filter((b) => !b.isRemote).map((b) => (
+                <button
+                  key={b.name}
+                  className={`compact-branch-option ${b.isCurrent ? 'active' : ''}`}
+                  onClick={() => handleBranchSwitch(b.name)}
+                >
+                  <GitBranch size={10} strokeWidth={2} />
+                  {b.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {behindBy > 0 && <span className="compact-badge compact-badge--behind">↓{behindBy}</span>}
         {aheadBy > 0 && <span className="compact-badge compact-badge--ahead">↑{aheadBy}</span>}
         <div style={{ flex: 1 }} />
+        {aheadBy > 0 && (
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={handlePush}
+            disabled={pushing}
+            title={`${aheadBy} Commit(s) pushen`}
+          >
+            <Upload size={11} strokeWidth={2} />
+            Push
+          </button>
+        )}
         <button
           className="btn btn-ghost btn-sm"
           onClick={handleSync}
@@ -132,7 +196,7 @@ export function CompactView({ onSwitchToPro }: Props) {
       {/* File list */}
       <div className="compact-files">
         {changedFiles.length === 0 ? (
-          <div className="compact-empty">Keine Aenderungen</div>
+          <div className="compact-empty">Keine Änderungen</div>
         ) : (
           <>
             <div className="compact-files-header">
@@ -142,7 +206,7 @@ export function CompactView({ onSwitchToPro }: Props) {
                   checked={allSelected}
                   onChange={() => allSelected ? deselectAllFiles() : selectAllFiles()}
                 />
-                <span>Alle auswaehlen ({changedFiles.length})</span>
+                <span>Alle auswählen ({changedFiles.length})</span>
               </label>
             </div>
             <div className="compact-files-list">

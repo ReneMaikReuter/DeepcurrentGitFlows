@@ -24,7 +24,7 @@ export function TermsModal({ onAccept, onDecline }: Props) {
           <Shield size={20} strokeWidth={1.5} />
           <div>
             <div className="terms-title">Nutzungsbedingungen & Datenschutz</div>
-            <div className="terms-subtitle">Deepcurrent Git Flows — Interne Betriebssoftware</div>
+            <div className="terms-subtitle">Deepcurrent Git Flows — Interne Betriebssoftware | René-Maik Reuter · Deepcurrent Studio</div>
           </div>
         </div>
 
@@ -32,10 +32,10 @@ export function TermsModal({ onAccept, onDecline }: Props) {
           <section>
             <h3>§ 1 Geltungsbereich und Zugang</h3>
             <p>
-              Die vorliegende Software „Deepcurrent Git Flows" (nachfolgend „Software") ist ausschließlich für den internen Gebrauch durch Mitarbeiterinnen und Mitarbeiter sowie autorisierte Auftragnehmer der Deepcurrent Studio UG (haftungsbeschränkt) (nachfolgend „Deepcurrent Studio") bestimmt. Jede Nutzung durch unbefugte Dritte ist strikt untersagt und stellt eine Verletzung des Urheberrechts sowie gegebenenfalls weiterer Schutzrechte dar.
+              Die vorliegende Software „Deepcurrent Git Flows" (nachfolgend „Software") ist ausschließlich für den internen Gebrauch durch Mitarbeiterinnen und Mitarbeiter sowie autorisierte Auftragnehmer von René-Maik Reuter, handelnd unter der Projektbezeichnung Deepcurrent Studio (nachfolgend „Deepcurrent Studio"), bestimmt. Jede Nutzung durch unbefugte Dritte ist strikt untersagt und stellt eine Verletzung des Urheberrechts sowie gegebenenfalls weiterer Schutzrechte dar.
             </p>
             <p>
-              Der Zugang zu dieser Software setzt die ausdrückliche schriftliche oder digitale Autorisierung durch die Geschäftsführung von Deepcurrent Studio voraus. Eine Weitergabe von Zugangsdaten, Installationsdateien oder sonstigen zur Nutzung der Software erforderlichen Ressourcen an Dritte ist ohne vorherige schriftliche Genehmigung der Geschäftsführung verboten.
+              Der Zugang zu dieser Software setzt die ausdrückliche schriftliche oder digitale Autorisierung durch René-Maik Reuter als Inhaber von Deepcurrent Studio voraus. Eine Weitergabe von Zugangsdaten, Installationsdateien oder sonstigen zur Nutzung der Software erforderlichen Ressourcen an Dritte ist ohne vorherige schriftliche Genehmigung der Geschäftsführung verboten.
             </p>
           </section>
 
@@ -101,7 +101,7 @@ export function TermsModal({ onAccept, onDecline }: Props) {
           <section>
             <h3>§ 8 Anwendbares Recht</h3>
             <p>
-              Es gilt ausschließlich das Recht der Bundesrepublik Deutschland. Gerichtsstand für alle Streitigkeiten im Zusammenhang mit dieser Software ist, soweit gesetzlich zulässig, der Sitz von Deepcurrent Studio.
+              Es gilt ausschließlich das Recht der Bundesrepublik Deutschland. Gerichtsstand für alle Streitigkeiten im Zusammenhang mit dieser Software ist, soweit gesetzlich zulässig, der Wohnsitz von René-Maik Reuter als Inhaber von Deepcurrent Studio.
             </p>
           </section>
 

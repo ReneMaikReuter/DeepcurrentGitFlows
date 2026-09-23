@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Shield, Lock, RotateCcw, Info, Plus, X, FileX, FolderOpen, BookOpen } from 'lucide-react'
+import { Shield, Lock, RotateCcw, Info, Plus, X, FileX, FolderOpen, BookOpen, Sparkles } from 'lucide-react'
 import { Modal } from './Modal'
 import { ipc, IPC } from '../../hooks/useIpc'
 import { useLangStore, useT } from '../../i18n/useT'
@@ -7,7 +7,62 @@ import { manualContent } from '../../i18n/manualContent'
 import type { AppSettings, Branch } from '../../../shared/types'
 import './SettingsModal.css'
 
-const VERSION = '0.2.2'
+const CHANGELOG_ENTRIES = [
+  {
+    version: '0.2.3',
+    date: '23. September 2026',
+    changes: [
+      'Nutzungsbedingungen: korrekte Bezeichnung als Einzelperson (René-Maik Reuter, Projektbezeichnung Deepcurrent Studio)',
+      'Rechtlicher Hinweis auf Unternehmensform entfernt',
+      'Branch-Wechsel im Kompakt-Modus hinzugefügt',
+      'Push-Button im Kompakt-Modus (erscheint wenn Commits zum Pushen vorhanden)',
+      'Geschützte Branches: Löschen wird jetzt serverseitig blockiert',
+      'Backup-Limit wird jetzt korrekt eingehalten',
+      'AutoLock: LFS-Dateien werden beim Bearbeiten automatisch gesperrt (nicht erst nach Commit)',
+      'Changelog-Tab in den Einstellungen',
+      'Alle Änderungen in den Release Notes vollständig ausgeschrieben (kein +N mehr)',
+      'Schrifttext in Nutzungsbedingungen besser lesbar',
+    ],
+  },
+  {
+    version: '0.2.1',
+    date: '23. September 2026',
+    changes: [
+      'Kompakt-Modus: reduzierte Ansicht mit Dateiliste, Commit und Sync',
+      'Pro-Modus: vollständige Ansicht mit Sidebar, Tabs, History und Team',
+      'Modus-Umschalter oben rechts in der Titelleiste',
+      'Auswahl wird gespeichert und beim nächsten Start beibehalten',
+    ],
+  },
+  {
+    version: '0.2.0',
+    date: '23. September 2026',
+    changes: [
+      'Nutzungsbedingungen und Datenschutzhinweis beim ersten Programmstart',
+      'Was-ist-neu-Anzeige nach jedem Update mit Versionshistorie',
+      'Update-Download wird zuverlässig per Polling erkannt',
+    ],
+  },
+  {
+    version: '0.1.9',
+    date: '23. September 2026',
+    changes: [
+      'Update-Download wird jetzt zuverlässig erkannt (Polling alle 2 Sekunden)',
+      'Neustart-Button funktioniert nur wenn der Download wirklich abgeschlossen ist',
+      'Abbrechen-Button im Update-Fenster hinzugefügt',
+    ],
+  },
+  {
+    version: '0.1.8',
+    date: '23. September 2026',
+    changes: [
+      'Download-Fortschritt wird simuliert und zeigt Bewegung auch ohne echte Progress-Events',
+      'Download- und Installations-Phase werden getrennt angezeigt',
+    ],
+  },
+]
+
+const VERSION = '0.2.3'
 
 interface Props { onClose: () => void; onCheckUpdate?: () => void; noUpdate?: boolean }
 
@@ -29,7 +84,7 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
   const [gitignoreLines, setGitignoreLines] = useState<string[]>([])
   const [newIgnore, setNewIgnore] = useState('')
   const [ignoreSaved, setIgnoreSaved] = useState(false)
-  const [activeTab, setActiveTab] = useState<'settings' | 'manual'>('settings')
+  const [activeTab, setActiveTab] = useState<'settings' | 'manual' | 'changelog'>('settings')
 
   const [currentRepo, setCurrentRepo] = useState<string | null>(null)
 
@@ -79,7 +134,7 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
   const manual = manualContent[currentLang]
 
   return (
-    <Modal title={t('settings_title')} onClose={onClose} width={activeTab === 'manual' ? 660 : 480}>
+    <Modal title={t('settings_title')} onClose={onClose} width={activeTab === 'manual' || activeTab === 'changelog' ? 660 : 480}>
       {saved && <div className="settings-saved" aria-live="polite">{t('settings_saved')} ✓</div>}
 
       {/* Tab bar */}
@@ -96,6 +151,13 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
         >
           <BookOpen size={11} strokeWidth={2} />
           {t('settings_tab_manual')}
+        </button>
+        <button
+          className={`settings-tab-btn ${activeTab === 'changelog' ? 'active' : ''}`}
+          onClick={() => setActiveTab('changelog')}
+        >
+          <Sparkles size={11} strokeWidth={2} />
+          Changelog
         </button>
       </div>
 
@@ -357,6 +419,25 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
             </button>
           </div>
         </>
+      ) : activeTab === 'changelog' ? (
+        <div className="manual-view">
+          {CHANGELOG_ENTRIES.map((entry) => (
+            <div key={entry.version} className="manual-section">
+              <div className="manual-section-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Sparkles size={12} strokeWidth={2} style={{ color: 'var(--accent)' }} />
+                Version {entry.version}
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontWeight: 400 }}>{entry.date}</span>
+              </div>
+              <div className="manual-items">
+                {entry.changes.map((c, i) => (
+                  <div key={i} className="manual-item">
+                    <span className="manual-item-text">{c}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="manual-view">
           {manual.sections.map((section) => (

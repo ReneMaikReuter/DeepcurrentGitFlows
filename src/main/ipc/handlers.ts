@@ -160,6 +160,31 @@ export function registerIpcHandlers(): void {
       git.checkHealth(),
     ])
     const lfsStatus = await lfs.getStatus()
+
+    // AutoLock: if enabled, lock any changed LFS-tracked files not yet locked
+    if (settings.get().lfsAutoLock && files.length > 0) {
+      const executor = new GitExecutor(repoPath)
+      const locksResult = await executor.git(['lfs', 'locks', '--json']).catch(() => null)
+      const lockedPaths = new Set<string>()
+      if (locksResult?.success) {
+        try {
+          const raw = JSON.parse(locksResult.stdout)
+          ;(Array.isArray(raw) ? raw : []).forEach((l: Record<string, unknown>) => {
+            if (l.path) lockedPaths.add(String(l.path))
+          })
+        } catch { /* ignore parse errors */ }
+      }
+      const lfsExtensions = /\.(uasset|umap|ubulk|uexp)$/i
+      for (const f of files) {
+        if (lockedPaths.has(f.path)) continue
+        if (!lfsExtensions.test(f.path)) continue
+        const tracked = await lfs.isFileTrackedByLfs(f.path).catch(() => false)
+        if (tracked) {
+          executor.git(['lfs', 'lock', f.path]).catch(() => {/* silent if already locked by this user */})
+        }
+      }
+    }
+
     return { files, branch, health, lfsStatus }
   })
 
@@ -228,6 +253,10 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle(IPC.BRANCH_DELETE, async (_e, repoPath: string, name: string, force: boolean, confirmed: boolean) => {
+    const protectedBranches: string[] = settings.get().protectedBranches ?? []
+    if (protectedBranches.includes(name)) {
+      return { success: false, error: `Branch "${name}" ist geschützt und kann nicht gelöscht werden.` }
+    }
     const safe = new SafeGitService(repoPath)
     return safe.deleteBranch(name, { force, confirmed })
   })
@@ -372,14 +401,16 @@ export function registerIpcHandlers(): void {
   // ── Backups ────────────────────────────────────────────────────────────────
 
   ipcMain.handle(IPC.BACKUP_CREATE, async (_e, repoPath: string, label: string) => {
-    const backup = new BackupService(repoPath)
+    const retention = settings.get().backupRetentionCount ?? 10
+    const backup = new BackupService(repoPath, retention)
     const result = await backup.createBackup(label || 'manual')
     log.info('backup:create', [label || 'manual'])
     return { success: true, backup: result }
   })
 
   ipcMain.handle(IPC.BACKUP_LIST, async (_e, repoPath: string) => {
-    const backup = new BackupService(repoPath)
+    const retention = settings.get().backupRetentionCount ?? 10
+    const backup = new BackupService(repoPath, retention)
     return backup.listBackups()
   })
 

@@ -21,6 +21,7 @@ function applyTheme(theme: AppSettings['theme']) {
   document.documentElement.setAttribute('data-theme', theme)
   const material = theme === 'glass' ? 'acrylic' : 'none'
   ;(window as any).deepcurrent?.invoke('window:set-material', material)
+  ;(window as any).deepcurrent?.invoke('window:set-overlay-theme', theme)
 }
 
 export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {

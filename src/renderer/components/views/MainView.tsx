@@ -17,7 +17,6 @@ import { CommitPanel } from '../ui/CommitPanel'
 import { SyncPanel } from '../ui/SyncPanel'
 import { TeamPanel } from '../ui/TeamPanel'
 import { HistoryPanel } from '../ui/HistoryPanel'
-import { BranchGraphPanel } from '../ui/BranchGraphPanel'
 import { HealthBar } from '../ui/HealthBar'
 import { ToastContainer } from '../ui/ToastContainer'
 import { ProgressBar } from '../ui/ProgressBar'
@@ -39,7 +38,7 @@ interface Props {
 export function MainView({ onSwitchToCompact, active = true }: Props) {
   const { currentRepo, health, refreshStatus, changedFiles } = useRepoStore()
   const { state: updater, checkForUpdates, installNow, dismiss } = useUpdater()
-  const [activeTab, setActiveTab] = useState<'changes' | 'sync' | 'history' | 'graph' | 'team'>('changes')
+  const [activeTab, setActiveTab] = useState<'changes' | 'sync' | 'history' | 'team'>('changes')
   const [ueRunning, setUeRunning] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -153,7 +152,6 @@ export function MainView({ onSwitchToCompact, active = true }: Props) {
             <button className={`tab-btn ${activeTab === 'changes' ? 'active' : ''}`} onClick={() => setActiveTab('changes')}>{t('tab_changes')}</button>
             <button className={`tab-btn ${activeTab === 'sync' ? 'active' : ''}`} onClick={() => setActiveTab('sync')}>{t('tab_sync')}</button>
             <button className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>{t('tab_history')}</button>
-            <button className={`tab-btn ${activeTab === 'graph' ? 'active' : ''}`} onClick={() => setActiveTab('graph')}>Graph</button>
             <button className={`tab-btn ${activeTab === 'team' ? 'active' : ''}`} onClick={() => setActiveTab('team')}>{t('tab_team')}</button>
           </div>
 
@@ -167,7 +165,6 @@ export function MainView({ onSwitchToCompact, active = true }: Props) {
             )}
             {activeTab === 'sync' && <SyncPanel />}
             {activeTab === 'history' && <HistoryPanel />}
-            {activeTab === 'graph' && <BranchGraphPanel />}
             {activeTab === 'team' && (
               <div className="panel">
                 <TeamPanel expanded />

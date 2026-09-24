@@ -13,7 +13,19 @@ if (!gotLock) {
 
 let mainWindow: BrowserWindow | null = null
 
+function getOverlayColors(theme: string): { bg: string; symbol: string } {
+  switch (theme) {
+    case 'light':       return { bg: '#f5f5f7',   symbol: '#3a3a4a' }
+    case 'deepcurrent': return { bg: '#07080c',   symbol: '#F2F1ED' }
+    case 'glass':       return { bg: '#00000000', symbol: '#d8d8e8' }
+    default:            return { bg: '#111113',   symbol: '#a0a0bc' }
+  }
+}
+
 function createWindow(): void {
+  const savedTheme = SettingsService.getInstance().get().theme
+  const overlayColors = getOverlayColors(savedTheme)
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -22,7 +34,14 @@ function createWindow(): void {
     icon: path.join(__dirname, '../../assets/icon.ico'),
     backgroundColor: '#00000000',
     transparent: true,
-    frame: false,
+    // titleBarStyle:'hidden' + titleBarOverlay aktiviert Windows Snap Layouts
+    // auf dem Maximize-Button, während der Rest vollständig custom bleibt.
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: overlayColors.bg,
+      symbolColor: overlayColors.symbol,
+      height: 36,
+    },
     thickFrame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -33,8 +52,7 @@ function createWindow(): void {
     },
   })
 
-  // Gespeichertes Theme vor dem Anzeigen anwenden
-  const savedTheme = SettingsService.getInstance().get().theme
+  // Gespeichertes Theme anwenden
   if (savedTheme === 'glass') {
     try { mainWindow.setBackgroundMaterial('acrylic' as any) } catch {}
   } else {
@@ -122,6 +140,15 @@ function createWindow(): void {
     } catch (e) {
       // setBackgroundMaterial wirft auf Windows 10 oder aelteren Electron-Versionen
     }
+  })
+
+  // Overlay-Farben bei Theme-Wechsel aktualisieren (für Snap-Layouts-Button-Optik)
+  ipcMain.handle('window:set-overlay-theme', (_e, theme: string) => {
+    if (!mainWindow) return
+    const colors = getOverlayColors(theme)
+    try {
+      mainWindow.setTitleBarOverlay({ color: colors.bg, symbolColor: colors.symbol, height: 36 })
+    } catch {}
   })
 
   // Theme beim Start anwenden (wird direkt nach dem ersten Renderer-Load aufgerufen)

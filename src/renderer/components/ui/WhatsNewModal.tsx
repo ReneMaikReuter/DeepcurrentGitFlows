@@ -9,6 +9,14 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.7.7',
+    date: '25. September 2026',
+    changes: [
+      'Graph-Tab entfernt — vereinfachte Tab-Leiste mit Aenderungen, Sync, History und Team',
+      'Windows Snap Layouts: Snap-Popup erscheint beim Hovern ueber den Maximieren-Button (native Windows 11 Kacheln)',
+    ],
+  },
+  {
     version: '0.7.6',
     date: '24. September 2026',
     changes: [

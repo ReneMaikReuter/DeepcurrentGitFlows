@@ -9,6 +9,16 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.9.2',
+    date: '25. September 2026',
+    changes: [
+      'Tetris fix: Bloecke fallen jetzt korrekt automatisch herunter',
+      'Vorschau des naechsten Blocks in der Sidebar',
+      'Spielername kommt automatisch aus dem eingeloggten Git-Account',
+      'Wall-Kick beim Drehen: Block rotiert auch an der Wand korrekt',
+    ],
+  },
+  {
     version: '0.9.1',
     date: '25. September 2026',
     changes: [

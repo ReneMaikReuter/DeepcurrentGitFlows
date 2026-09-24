@@ -106,6 +106,13 @@
   max-width: 100px;
 }
 
+.tetris-next-canvas {
+  display: block;
+  border-radius: 4px;
+  background: var(--bg-app, #080612);
+  margin-top: 4px;
+}
+
 .tetris-controls {
   margin-top: auto;
   display: flex;

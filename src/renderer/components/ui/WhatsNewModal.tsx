@@ -9,6 +9,16 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.9.1',
+    date: '25. September 2026',
+    changes: [
+      'Tetris-Button (🎮) in der Titelleiste: vollwertiges Tetris direkt in der App',
+      'Tetris passt sich dem aktiven Theme an: Neon-Farben in Synthwave, neutrale Farben sonst',
+      'Ghost-Piece, Level-System, Punkte -- Esc oder X zum Schliessen',
+      'Highscore-Board: lokale Bestenliste mit Git-Nutzernamen aller Spieler auf dem PC',
+    ],
+  },
+  {
     version: '0.9.0',
     date: '25. September 2026',
     changes: [

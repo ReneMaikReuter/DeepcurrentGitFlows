@@ -22,6 +22,7 @@ import { ToastContainer } from '../ui/ToastContainer'
 import { ProgressBar } from '../ui/ProgressBar'
 import { WindowControls } from '../ui/WindowControls'
 import { PartyButton } from '../ui/PartyButton'
+import { TetrisGame } from '../ui/TetrisGame'
 import { UpdateOverlay } from '../ui/UpdateOverlay'
 import { useUpdater } from '../../hooks/useUpdater'
 import './MainView.css'
@@ -42,6 +43,8 @@ export function MainView({ onSwitchToCompact, active = true }: Props) {
   const [activeTab, setActiveTab] = useState<'changes' | 'sync' | 'history' | 'team'>('changes')
   const [ueRunning, setUeRunning] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [tetrisOpen, setTetrisOpen]     = useState(false)
+  const [currentTheme, setCurrentTheme] = useState('dark')
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem('sidebarWidth')
     return saved ? Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, parseInt(saved))) : SIDEBAR_DEFAULT
@@ -70,7 +73,7 @@ export function MainView({ onSwitchToCompact, active = true }: Props) {
   useEffect(() => {
     ipc.invoke<AppSettings>(IPC.SETTINGS_GET).then((s) => {
       if (s?.fontSize) applyFontSize(s.fontSize)
-      if (s?.theme) document.documentElement.setAttribute('data-theme', s.theme)
+      if (s?.theme) { document.documentElement.setAttribute('data-theme', s.theme); setCurrentTheme(s.theme) }
       if (s?.language) setLang(s.language)
     })
 
@@ -102,6 +105,7 @@ export function MainView({ onSwitchToCompact, active = true }: Props) {
     <div className="main-layout-root">
       <div className="sw-sun" aria-hidden="true" />
       <div className="sw-grid" aria-hidden="true" />
+      {tetrisOpen && <TetrisGame theme={currentTheme} onClose={() => setTetrisOpen(false)} />}
       <ProgressBar />
       <ToastContainer />
       {(updater.updateAvailable || updater.updateDownloaded) && updater.version && !updater.dismissed && (
@@ -131,6 +135,11 @@ export function MainView({ onSwitchToCompact, active = true }: Props) {
             <Settings size={14} strokeWidth={2} />
           </button>
           <PartyButton />
+          <button
+            className="game-btn"
+            onClick={() => setTetrisOpen(v => !v)}
+            title="Tetris spielen"
+          >🎮</button>
           <button className="compact-mode-switch" onClick={onSwitchToCompact} title="Kompakt-Modus aktivieren">
             <Layers size={11} strokeWidth={2} />
             <span className="compact-mode-label">Pro</span>

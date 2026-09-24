@@ -12,7 +12,7 @@ import type { AppSettings } from '../shared/types'
 import './styles/app.css'
 import './components/ui/WhatsNewModal.css'
 
-const CURRENT_VERSION = '0.9.0'
+const CURRENT_VERSION = '0.9.1'
 
 export function App() {
   const { currentRepo, loadSavedRepos } = useRepoStore()

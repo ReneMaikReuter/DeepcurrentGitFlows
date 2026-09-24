@@ -9,6 +9,15 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.8.9',
+    date: '25. September 2026',
+    changes: [
+      'Synthwave-Sonne jetzt Vollkreis in der unteren rechten Ecke, leicht angeschnitten',
+      '3D-Perspektiv-Raster als Boden-Grid im Synthwave-Theme (wie klassisches Retrowave)',
+      'Im Party-Modus wechselt das Raster zwischen Magenta, Cyan und Violett',
+    ],
+  },
+  {
     version: '0.8.8',
     date: '25. September 2026',
     changes: [

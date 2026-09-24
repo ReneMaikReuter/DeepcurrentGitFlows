@@ -29,18 +29,17 @@
   100% { transform: rotate(360deg) scale(1.1); }
 }
 
-/* ── Synthwave Sonne (DOM-Element .sw-sun) ──────────────────────────────── */
+/* ── Synthwave Sonne (Vollkreis, unten rechts) ───────────────────────────── */
 .sw-sun {
   display: none;
   position: fixed;
-  width: 560px;
-  height: 280px;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
+  width: 340px;
+  height: 340px;
+  right: -70px;
+  bottom: -70px;
   pointer-events: none;
-  z-index: 1;
-  border-radius: 280px 280px 0 0;
+  z-index: 2;
+  border-radius: 50%;
   background: linear-gradient(
     180deg,
     #FF2BD6 0%,
@@ -48,49 +47,89 @@
     #FF4FA3 10%,
     #FF4FA3 20%,
     #FF8C42 20%,
-    #FF8C42 30%,
-    #FFD700 30%,
-    #FFD700 40%,
-    #39FF9F 40%,
-    #39FF9F 52%,
-    #28E7FF 52%,
-    #28E7FF 64%,
-    #8B5CFF 64%,
-    #8B5CFF 78%,
-    #FF2BD6 78%,
+    #FF8C42 31%,
+    #FFD700 31%,
+    #FFD700 43%,
+    #39FF9F 43%,
+    #39FF9F 55%,
+    #28E7FF 55%,
+    #28E7FF 67%,
+    #8B5CFF 67%,
+    #8B5CFF 80%,
+    #FF2BD6 80%,
     #FF2BD6 100%
   );
-  opacity: 0.18;
+  opacity: 0.55;
   mix-blend-mode: screen;
   -webkit-mask-image: repeating-linear-gradient(
     180deg,
     black 0px,
-    black 13px,
-    transparent 13px,
-    transparent 20px
+    black 14px,
+    transparent 14px,
+    transparent 22px
   );
   mask-image: repeating-linear-gradient(
     180deg,
     black 0px,
-    black 13px,
-    transparent 13px,
-    transparent 20px
+    black 14px,
+    transparent 14px,
+    transparent 22px
   );
+  /* Glow-Schein */
+  filter: drop-shadow(0 0 30px rgba(255, 43, 214, 0.6));
 }
 
 [data-theme="synthwave"] .sw-sun {
   display: block;
 }
 
+/* ── Synthwave 3D-Raster (Boden-Grid) ───────────────────────────────────── */
+.sw-grid {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 42%;
+  pointer-events: none;
+  z-index: 1;
+  transform-origin: 50% 100%;
+  transform: perspective(380px) rotateX(62deg);
+  background-image:
+    linear-gradient(rgba(40, 231, 255, 0.55) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(40, 231, 255, 0.55) 1px, transparent 1px);
+  background-size: 64px 64px;
+  opacity: 0.22;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, black 35%, black 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, black 35%, black 100%);
+}
+
+[data-theme="synthwave"] .sw-grid {
+  display: block;
+}
+
 /* ── Party Mode — alles explodiert ─────────────────────────────────────── */
 [data-party="true"][data-theme="synthwave"] .sw-sun {
-  opacity: 0.75;
+  opacity: 0.90;
+  filter: drop-shadow(0 0 50px rgba(255, 43, 214, 0.9));
   animation: party-sun-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes party-sun-pulse {
-  0%, 100% { transform: translateX(-50%) scale(1);    opacity: 0.75; }
-  50%       { transform: translateX(-50%) scale(1.10); opacity: 0.95; }
+  0%, 100% { transform: scale(1);    opacity: 0.90; }
+  50%       { transform: scale(1.07); opacity: 1.0; }
+}
+
+[data-party="true"][data-theme="synthwave"] .sw-grid {
+  opacity: 0.45;
+  animation: party-grid-color 1s linear infinite;
+}
+
+@keyframes party-grid-color {
+  0%   { background-image: linear-gradient(rgba(255,43,214,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,43,214,0.7) 1px, transparent 1px); }
+  33%  { background-image: linear-gradient(rgba(40,231,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(40,231,255,0.7) 1px, transparent 1px); }
+  66%  { background-image: linear-gradient(rgba(139,92,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,255,0.7) 1px, transparent 1px); }
+  100% { background-image: linear-gradient(rgba(255,43,214,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,43,214,0.7) 1px, transparent 1px); }
 }
 
 /* Hintergrund-Farbwechsel */

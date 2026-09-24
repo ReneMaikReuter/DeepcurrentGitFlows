@@ -101,6 +101,7 @@ export function MainView({ onSwitchToCompact, active = true }: Props) {
   return (
     <div className="main-layout-root">
       <div className="sw-sun" aria-hidden="true" />
+      <div className="sw-grid" aria-hidden="true" />
       <ProgressBar />
       <ToastContainer />
       {(updater.updateAvailable || updater.updateDownloaded) && updater.version && !updater.dismissed && (

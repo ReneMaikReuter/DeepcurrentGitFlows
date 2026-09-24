@@ -9,6 +9,14 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.9.3',
+    date: '25. September 2026',
+    changes: [
+      'Tetris critical fix: Spiel war eingefroren durch React-Effect-Loop-Bug (colors-Ref)',
+      'Bloecke fallen jetzt zuverlaessig, Steuerung reagiert sofort',
+    ],
+  },
+  {
     version: '0.9.2',
     date: '25. September 2026',
     changes: [

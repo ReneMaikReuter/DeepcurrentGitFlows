@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { ipc, IPC } from '../../hooks/useIpc'
 import './TetrisGame.css'
 
@@ -83,7 +83,9 @@ export function TetrisGame({ onClose, theme }: Props) {
   const [tab,     setTab]     = useState<'game' | 'hi'>('game')
   const playerRef = useRef('Player')
 
-  const colors = getColors(theme)
+  // useMemo verhindert dass colors bei jedem Render ein neues Array ist
+  // (neues Array → useEffect-Dep ändert sich → Loop-Restart → running=false-Bug)
+  const colors = useMemo(() => getColors(theme), [theme])
 
   useEffect(() => {
     ipc.invoke<{ userName?: string }>(IPC.REPO_CONFIG_GET).then(cfg => {
@@ -104,6 +106,7 @@ export function TetrisGame({ onClose, theme }: Props) {
 
   useEffect(() => {
     const g = G.current
+    g.running = true  // Cleanup des vorherigen Runs setzt es auf false — hier zurücksetzen
     const canvas = canvasRef.current!
     const ctx    = canvas.getContext('2d')!
     const nctx   = nextCanvasRef.current!.getContext('2d')!

@@ -9,6 +9,15 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.8.3',
+    date: '25. September 2026',
+    changes: [
+      'Glass-Theme komplett ueberarbeitet: dunkles Grau statt Weiss, alle Texte und Symbole weiss',
+      'Acrylic-Glaseffekt bleibt erhalten -- Blur/Saturation jetzt auf dunklem Hintergrund',
+      'Modals im Glass-Theme ebenfalls dunkel mit weisser Schrift',
+    ],
+  },
+  {
     version: '0.8.2',
     date: '25. September 2026',
     changes: [

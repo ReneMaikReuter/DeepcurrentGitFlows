@@ -74,18 +74,18 @@
   margin-bottom: var(--sp-1);
 }
 
-/* ── Glass Theme: Modal als dickes Milchglas, kaum Transparenz ──────────── */
+/* ── Glass Theme: Modal dunkel mit Acrylic-Blur ──────────────────────────── */
 [data-theme="glass"] .modal-overlay {
-  background: rgba(160, 160, 170, 0.82);
-  backdrop-filter: blur(16px) brightness(0.75);
-  -webkit-backdrop-filter: blur(16px) brightness(0.75);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 [data-theme="glass"] .modal-box {
-  background: rgba(248, 248, 250, 0.96);
-  border: 1px solid rgba(210, 210, 220, 0.7);
-  backdrop-filter: blur(40px) saturate(1.5) brightness(1.06);
-  -webkit-backdrop-filter: blur(40px) saturate(1.5) brightness(1.06);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.20), 0 2px 8px rgba(0, 0, 0, 0.12);
-  color: rgba(15, 15, 20, 0.92);
+  background: rgba(22, 22, 30, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(40px) saturate(1.4) brightness(0.85);
+  -webkit-backdrop-filter: blur(40px) saturate(1.4) brightness(0.85);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.60), 0 2px 8px rgba(0, 0, 0, 0.40);
+  color: rgba(240, 240, 245, 0.96);
 }

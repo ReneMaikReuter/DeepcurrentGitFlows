@@ -11,9 +11,8 @@
   display: flex;
   align-items: center;
   height: var(--titlebar-h);
-  /* padding-left normal, padding-right reserviert Platz für native WCO-Snap-Buttons */
-  padding: 0 0 0 var(--sp-4);
-  padding-right: max(calc(100% - env(titlebar-area-width, calc(100% - 138px))), 0px);
+  /* 138px = 3 × 46px native WCO-Buttons (Win11 Standard) */
+  padding: 0 138px 0 var(--sp-4);
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;

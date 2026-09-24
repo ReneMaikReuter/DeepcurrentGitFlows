@@ -9,6 +9,14 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.8.0',
+    date: '25. September 2026',
+    changes: [
+      'Bugfix: Pro-Switch und alle Titelleisten-Elemente wieder vollstaendig sichtbar',
+      'Bugfix: Fenster laesst sich wieder maximieren und per Kachel-Popup einrasten (Windows Snap Layouts)',
+    ],
+  },
+  {
     version: '0.7.9',
     date: '25. September 2026',
     changes: [

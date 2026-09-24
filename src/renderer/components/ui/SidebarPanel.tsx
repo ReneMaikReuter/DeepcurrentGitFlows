@@ -449,9 +449,9 @@ export function SidebarPanel() {
                   {branch.parentBranch && (
                     <span className="branch-parent">von {branch.parentBranch}</span>
                   )}
-                  {!branch.isCurrent && branch.lastCommitAuthor && (
-                    <span className="branch-last-author" title={`Zuletzt: ${branch.lastCommitAuthor}`}>
-                      {branch.lastCommitAuthor.split(' ')[0]}
+                  {branch.activeUsers?.length > 0 && (
+                    <span className="branch-last-author" title={`Aktiv: ${branch.activeUsers.join(', ')}`}>
+                      {branch.activeUsers.map((u) => u.split(' ')[0]).join(', ')}
                     </span>
                   )}
                 </span>
@@ -613,9 +613,9 @@ export function SidebarPanel() {
                     <GitBranch size={12} strokeWidth={1.8} style={{ flexShrink: 0, color: 'var(--text-muted)' }} />
                     <span className="branch-name-wrap">
                       <span className="branch-name truncate" style={{ color: 'var(--text-muted)' }}>{shortName}</span>
-                      {branch.lastCommitAuthor && (
-                        <span className="branch-last-author" title={`Zuletzt: ${branch.lastCommitAuthor}`}>
-                          {branch.lastCommitAuthor.split(' ')[0]}
+                      {branch.activeUsers?.length > 0 && (
+                        <span className="branch-last-author" title={`Aktiv: ${branch.activeUsers.join(', ')}`}>
+                          {branch.activeUsers.map((u) => u.split(' ')[0]).join(', ')}
                         </span>
                       )}
                     </span>

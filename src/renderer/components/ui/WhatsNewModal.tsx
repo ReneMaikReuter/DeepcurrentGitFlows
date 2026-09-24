@@ -9,6 +9,22 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.8.8',
+    date: '25. September 2026',
+    changes: [
+      'Neon-Rahmen laeuft im Party-Modus in allen Regenbogenfarben einmal rund ums Fenster',
+      'Dezenter Magenta-Rahmen auch ausserhalb des Party-Modus im Synthwave-Theme',
+    ],
+  },
+  {
+    version: '0.8.7',
+    date: '25. September 2026',
+    changes: [
+      'Bugfix: Synthwave-Sonne jetzt als echtes DOM-Element -- wird korrekt ueber den Panels angezeigt',
+      'Synthwave-Sonne: mix-blend-mode screen -- leuchtet durch Panel-Hintergruende',
+    ],
+  },
+  {
     version: '0.8.6',
     date: '25. September 2026',
     changes: [

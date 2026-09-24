@@ -29,19 +29,18 @@
   100% { transform: rotate(360deg) scale(1.1); }
 }
 
-/* ── Synthwave Sonne (immer sichtbar im Synthwave-Theme, dezent) ─────────── */
-[data-theme="synthwave"] body::before {
-  content: '';
+/* ── Synthwave Sonne (DOM-Element .sw-sun) ──────────────────────────────── */
+.sw-sun {
+  display: none;
   position: fixed;
-  /* Sonne: untere Hälfte eines Kreises */
-  width: 520px;
-  height: 260px;
+  width: 560px;
+  height: 280px;
   left: 50%;
   bottom: 0;
   transform: translateX(-50%);
   pointer-events: none;
-  z-index: 0;
-  border-radius: 260px 260px 0 0;
+  z-index: 1;
+  border-radius: 280px 280px 0 0;
   background: linear-gradient(
     180deg,
     #FF2BD6 0%,
@@ -61,35 +60,37 @@
     #FF2BD6 78%,
     #FF2BD6 100%
   );
-  opacity: 0.07;
-  filter: blur(1px);
-  /* horizontale Streifen durch Maske */
+  opacity: 0.18;
+  mix-blend-mode: screen;
   -webkit-mask-image: repeating-linear-gradient(
     180deg,
     black 0px,
-    black 14px,
-    transparent 14px,
+    black 13px,
+    transparent 13px,
     transparent 20px
   );
   mask-image: repeating-linear-gradient(
     180deg,
     black 0px,
-    black 14px,
-    transparent 14px,
+    black 13px,
+    transparent 13px,
     transparent 20px
   );
 }
 
+[data-theme="synthwave"] .sw-sun {
+  display: block;
+}
+
 /* ── Party Mode — alles explodiert ─────────────────────────────────────── */
-[data-party="true"][data-theme="synthwave"] body::before {
-  opacity: 0.55;
-  filter: none;
+[data-party="true"][data-theme="synthwave"] .sw-sun {
+  opacity: 0.75;
   animation: party-sun-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes party-sun-pulse {
-  0%, 100% { transform: translateX(-50%) scale(1);    opacity: 0.55; }
-  50%       { transform: translateX(-50%) scale(1.08); opacity: 0.75; }
+  0%, 100% { transform: translateX(-50%) scale(1);    opacity: 0.75; }
+  50%       { transform: translateX(-50%) scale(1.10); opacity: 0.95; }
 }
 
 /* Hintergrund-Farbwechsel */
@@ -182,6 +183,25 @@
   33%  { box-shadow: 0 0 16px #28E7FF; background: #28E7FF; }
   66%  { box-shadow: 0 0 16px #8B5CFF; background: #8B5CFF; }
   100% { box-shadow: 0 0 16px #FF2BD6; background: #FF2BD6; }
+}
+
+/* Neon-Rahmen um das gesamte Fenster */
+[data-theme="synthwave"] .main-layout-root {
+  box-shadow: inset 0 0 0 1px rgba(255, 43, 214, 0.25);
+}
+
+[data-party="true"][data-theme="synthwave"] .main-layout-root {
+  animation: party-window-border 1s linear infinite;
+}
+
+@keyframes party-window-border {
+  0%   { box-shadow: inset 0 0 0 2px #FF2BD6, 0 0 18px rgba(255,43,214,0.5); }
+  16%  { box-shadow: inset 0 0 0 2px #FF8C42, 0 0 18px rgba(255,140,66,0.5); }
+  33%  { box-shadow: inset 0 0 0 2px #FFD700, 0 0 18px rgba(255,215,0,0.5); }
+  50%  { box-shadow: inset 0 0 0 2px #39FF9F, 0 0 18px rgba(57,255,159,0.5); }
+  66%  { box-shadow: inset 0 0 0 2px #28E7FF, 0 0 18px rgba(40,231,255,0.5); }
+  83%  { box-shadow: inset 0 0 0 2px #8B5CFF, 0 0 18px rgba(139,92,255,0.5); }
+  100% { box-shadow: inset 0 0 0 2px #FF2BD6, 0 0 18px rgba(255,43,214,0.5); }
 }
 
 /* Scanlines werden intensiver */

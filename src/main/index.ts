@@ -32,10 +32,9 @@ function createWindow(): void {
     minWidth: 900,
     minHeight: 600,
     icon: path.join(__dirname, '../../assets/icon.ico'),
-    backgroundColor: '#00000000',
-    transparent: true,
-    // titleBarStyle:'hidden' + titleBarOverlay aktiviert Windows Snap Layouts
-    // auf dem Maximize-Button, während der Rest vollständig custom bleibt.
+    // Kein transparent:true — transparente Fenster werden von DWM nicht
+    // für Snap Layouts getrackt. Acrylic/Glass läuft über setBackgroundMaterial.
+    backgroundColor: '#111113',
     titleBarStyle: 'hidden',
     titleBarOverlay: {
       color: overlayColors.bg,
@@ -52,11 +51,9 @@ function createWindow(): void {
     },
   })
 
-  // Gespeichertes Theme anwenden
+  // Gespeichertes Theme anwenden — acrylic funktioniert ohne transparent:true auf Win11
   if (savedTheme === 'glass') {
     try { mainWindow.setBackgroundMaterial('acrylic' as any) } catch {}
-  } else {
-    mainWindow.setBackgroundColor('#111113')
   }
 
   const isDev = process.env.NODE_ENV === 'development' || !!process.env.VITE_DEV_SERVER_URL
@@ -134,7 +131,6 @@ function createWindow(): void {
         mainWindow.setBackgroundMaterial('none')
         mainWindow.setBackgroundColor('#111113')
       } else {
-        mainWindow.setBackgroundColor('#00000000')
         mainWindow.setBackgroundMaterial(material as any)
       }
     } catch (e) {
@@ -157,7 +153,6 @@ function createWindow(): void {
     const theme = SettingsService.getInstance().get().theme
     if (theme === 'glass') {
       try {
-        mainWindow.setBackgroundColor('#00000000')
         mainWindow.setBackgroundMaterial('acrylic' as any)
       } catch {}
     }

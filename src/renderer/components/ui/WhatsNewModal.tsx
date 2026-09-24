@@ -9,6 +9,14 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.8.1',
+    date: '25. September 2026',
+    changes: [
+      'Bugfix: Windows Snap Layouts und Fenster-Einrasten funktionieren jetzt korrekt',
+      'Ursache: transparent:true verhinderte DWM-Snap-Tracking -- entfernt, Acrylic-Effekt laeuft weiterhin ueber setBackgroundMaterial',
+    ],
+  },
+  {
     version: '0.8.0',
     date: '25. September 2026',
     changes: [

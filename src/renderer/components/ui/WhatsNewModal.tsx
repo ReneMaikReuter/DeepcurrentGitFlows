@@ -9,6 +9,13 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.7.8',
+    date: '25. September 2026',
+    changes: [
+      'Team-Tab: Asset-Zeilen zeigen jetzt den vollstaendigen Dateipfad statt dem Kurznamen',
+    ],
+  },
+  {
     version: '0.7.7',
     date: '25. September 2026',
     changes: [

@@ -18,33 +18,6 @@ function timeAgo(ms: number | null): string {
   return 'gerade eben'
 }
 
-function assetName(path: string): string {
-  return path.split('/').pop() ?? path
-}
-
-function smartPath(path: string): string {
-  // Content/__ExternalActors__/ProjectFolder/LevelName/0/AB/HASH.uasset
-  // Show "ProjectFolder / LevelName (External Actor)" — the level name is the meaningful part
-  const extActorMatch = path.match(/Content\/__ExternalActors__\/([^/]+)\/([^/]+)/)
-  if (extActorMatch) return `${extActorMatch[1]} / ${extActorMatch[2]} (External Actor)`
-  const extActorShort = path.match(/Content\/__ExternalActors__\/([^/]+)/)
-  if (extActorShort) return `${extActorShort[1]} (External Actor)`
-
-  const extObjectMatch = path.match(/Content\/__ExternalObjects__\/([^/]+)\/([^/]+)/)
-  if (extObjectMatch) return `${extObjectMatch[1]} / ${extObjectMatch[2]} (External Object)`
-  const extObjectShort = path.match(/Content\/__ExternalObjects__\/([^/]+)/)
-  if (extObjectShort) return `${extObjectShort[1]} (External Object)`
-
-  // Regular Content path — show from Content/ onward, max 4 segments
-  const contentIdx = path.indexOf('Content/')
-  if (contentIdx !== -1) {
-    const rel = path.slice(contentIdx)
-    const parts = rel.split('/')
-    if (parts.length > 4) return parts.slice(0, 4).join('/') + '/…'
-    return rel
-  }
-  return path
-}
 
 interface PersonEntry {
   name: string
@@ -105,7 +78,7 @@ export function TeamPanel({ expanded = false }: TeamPanelProps) {
     const res = await ipc.invoke<{ success: boolean; error: string | null }>(IPC.LFS_UNLOCK, currentRepo.path, path, force)
     setWorking(null)
     if (res.success) {
-      toast.ok(`"${assetName(path)}" entsperrt.`)
+      toast.ok(`"${path.split('/').pop() ?? path}" entsperrt.`)
       await loadLocks()
     } else if (!force && res.error?.toLowerCase().includes('uncommitted')) {
       setConfirmForce({ lockId, path })
@@ -119,7 +92,7 @@ export function TeamPanel({ expanded = false }: TeamPanelProps) {
     setWorking(path)
     const res = await ipc.invoke<{ success: boolean; error: string | null }>(IPC.LFS_LOCK, currentRepo.path, path)
     setWorking(null)
-    if (res.success) { toast.ok(`"${assetName(path)}" gesperrt.`); await loadLocks() }
+    if (res.success) { toast.ok(`"${path.split('/').pop() ?? path}" gesperrt.`); await loadLocks() }
     else toast.err(res.error ?? 'Lock fehlgeschlagen.')
   }
 
@@ -245,7 +218,7 @@ export function TeamPanel({ expanded = false }: TeamPanelProps) {
                         return (
                           <div key={f.path} className={`team-file ${myLock ? 'team-file--locked' : ''}`}>
                             <span className={`team-file-status team-file-status--${f.status}`}>{STATUS[f.status] ?? '?'}</span>
-                            <span className="team-file-name" title={f.path}>{assetName(f.path)}</span>
+                            <span className="team-file-name">{f.path}</span>
                             {myLock ? (
                               <button className="team-lock-btn" title="Entsperren" disabled={working === myLock.id}
                                 onClick={() => handleUnlock(myLock.id, myLock.path)}>
@@ -270,7 +243,7 @@ export function TeamPanel({ expanded = false }: TeamPanelProps) {
                       {person.locks.filter((l) => !myFiles.find((f) => f.path === l.path)).map((lock) => (
                         <div key={lock.id} className="team-file team-file--locked">
                           <Lock size={9} strokeWidth={2} style={{ color: person.isMe ? 'var(--accent)' : 'var(--warning)', flexShrink: 0 }} />
-                          <span className="team-file-name" title={lock.path}>{smartPath(lock.path)}</span>
+                          <span className="team-file-name">{lock.path}</span>
                           {lock.lockedAt && <span className="team-file-time">{timeAgo(lock.lockedAt)}</span>}
                           {person.isMe && (
                             <button className="team-lock-btn" title="Entsperren" disabled={working === lock.id}

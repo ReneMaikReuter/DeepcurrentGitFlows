@@ -9,6 +9,17 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.8.6',
+    date: '25. September 2026',
+    changes: [
+      'Party-Button im Synthwave-Theme: Klick auf das Diskokugel-Icon startet die Party',
+      'Party-Modus: bunte Animationen in allen UI-Elementen, Neon-Glows, Farbwechsel-Schleifen',
+      'Legendaere Synthwave-Sonne im Hintergrund -- Regenbogen-Streifen-Halbkreis als dezentes Deko-Element',
+      'Im Party-Modus pulsiert die Sonne und alle Panels blinken in Neonfarben',
+      'Musik: Obster66 - Sonnenuntergang laeuft im Hintergrund waehrend die Party laeuft',
+    ],
+  },
+  {
     version: '0.8.5',
     date: '25. September 2026',
     changes: [

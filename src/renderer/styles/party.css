@@ -1,0 +1,202 @@
+/* ── Party Button ───────────────────────────────────────────────────────── */
+.party-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 22px;
+  font-size: 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: transform 0.15s;
+  -webkit-app-region: no-drag;
+  line-height: 1;
+  padding: 0;
+}
+
+[data-theme="synthwave"] .party-btn {
+  display: flex;
+}
+
+.party-btn:hover { transform: scale(1.2); }
+.party-btn--active { animation: party-btn-spin 0.6s linear infinite; }
+
+@keyframes party-btn-spin {
+  0%   { transform: rotate(0deg)   scale(1.1); }
+  50%  { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1.1); }
+}
+
+/* ── Synthwave Sonne (immer sichtbar im Synthwave-Theme, dezent) ─────────── */
+[data-theme="synthwave"] body::before {
+  content: '';
+  position: fixed;
+  /* Sonne: untere Hälfte eines Kreises */
+  width: 520px;
+  height: 260px;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 260px 260px 0 0;
+  background: linear-gradient(
+    180deg,
+    #FF2BD6 0%,
+    #FF2BD6 10%,
+    #FF4FA3 10%,
+    #FF4FA3 20%,
+    #FF8C42 20%,
+    #FF8C42 30%,
+    #FFD700 30%,
+    #FFD700 40%,
+    #39FF9F 40%,
+    #39FF9F 52%,
+    #28E7FF 52%,
+    #28E7FF 64%,
+    #8B5CFF 64%,
+    #8B5CFF 78%,
+    #FF2BD6 78%,
+    #FF2BD6 100%
+  );
+  opacity: 0.07;
+  filter: blur(1px);
+  /* horizontale Streifen durch Maske */
+  -webkit-mask-image: repeating-linear-gradient(
+    180deg,
+    black 0px,
+    black 14px,
+    transparent 14px,
+    transparent 20px
+  );
+  mask-image: repeating-linear-gradient(
+    180deg,
+    black 0px,
+    black 14px,
+    transparent 14px,
+    transparent 20px
+  );
+}
+
+/* ── Party Mode — alles explodiert ─────────────────────────────────────── */
+[data-party="true"][data-theme="synthwave"] body::before {
+  opacity: 0.55;
+  filter: none;
+  animation: party-sun-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes party-sun-pulse {
+  0%, 100% { transform: translateX(-50%) scale(1);    opacity: 0.55; }
+  50%       { transform: translateX(-50%) scale(1.08); opacity: 0.75; }
+}
+
+/* Hintergrund-Farbwechsel */
+[data-party="true"][data-theme="synthwave"] body {
+  animation: party-bg 3s linear infinite;
+}
+
+@keyframes party-bg {
+  0%   { background: #080612; }
+  16%  { background: #0d0820; }
+  33%  { background: #100420; }
+  50%  { background: #08121a; }
+  66%  { background: #0a0818; }
+  83%  { background: #0f0820; }
+  100% { background: #080612; }
+}
+
+/* Titlebar pulsiert in Neonfarben */
+[data-party="true"][data-theme="synthwave"] .titlebar {
+  animation: party-titlebar 0.8s linear infinite;
+}
+
+@keyframes party-titlebar {
+  0%   { border-bottom-color: #FF2BD6; background: #0d0919; }
+  25%  { border-bottom-color: #28E7FF; background: #080d1a; }
+  50%  { border-bottom-color: #8B5CFF; background: #0d0919; }
+  75%  { border-bottom-color: #FF4FA3; background: #1a0818; }
+  100% { border-bottom-color: #FF2BD6; background: #0d0919; }
+}
+
+/* Sidebar pulsiert */
+[data-party="true"][data-theme="synthwave"] .sidebar {
+  animation: party-sidebar 1.2s linear infinite;
+}
+
+@keyframes party-sidebar {
+  0%   { border-right-color: rgba(255,43,214,0.6); }
+  33%  { border-right-color: rgba(40,231,255,0.6); }
+  66%  { border-right-color: rgba(139,92,255,0.6); }
+  100% { border-right-color: rgba(255,43,214,0.6); }
+}
+
+/* Aktiver Branch dreht durch alle Neonfarben */
+[data-party="true"][data-theme="synthwave"] .branch-item-row.active {
+  animation: party-branch 0.5s linear infinite;
+}
+
+@keyframes party-branch {
+  0%   { border-left-color: #FF2BD6; background: rgba(255,43,214,0.12); }
+  25%  { border-left-color: #28E7FF; background: rgba(40,231,255,0.12); }
+  50%  { border-left-color: #8B5CFF; background: rgba(139,92,255,0.12); }
+  75%  { border-left-color: #FF4FA3; background: rgba(255,79,163,0.12); }
+  100% { border-left-color: #FF2BD6; background: rgba(255,43,214,0.12); }
+}
+
+/* Tab-Leiste: Text blinkt bunt */
+[data-party="true"][data-theme="synthwave"] .tab-btn.active {
+  animation: party-tab 0.7s linear infinite;
+}
+
+@keyframes party-tab {
+  0%   { color: #FF2BD6; border-bottom-color: #FF2BD6; text-shadow: 0 0 10px #FF2BD6; }
+  33%  { color: #28E7FF; border-bottom-color: #28E7FF; text-shadow: 0 0 10px #28E7FF; }
+  66%  { color: #8B5CFF; border-bottom-color: #8B5CFF; text-shadow: 0 0 10px #8B5CFF; }
+  100% { color: #FF2BD6; border-bottom-color: #FF2BD6; text-shadow: 0 0 10px #FF2BD6; }
+}
+
+/* Primärtext regenbogenfarben */
+[data-party="true"][data-theme="synthwave"] .titlebar-app {
+  animation: party-rainbow-text 1s linear infinite;
+}
+
+@keyframes party-rainbow-text {
+  0%   { color: #FF2BD6; }
+  16%  { color: #FF8C42; }
+  33%  { color: #FFD700; }
+  50%  { color: #39FF9F; }
+  66%  { color: #28E7FF; }
+  83%  { color: #8B5CFF; }
+  100% { color: #FF2BD6; }
+}
+
+/* Buttons pulsieren */
+[data-party="true"][data-theme="synthwave"] .btn-primary {
+  animation: party-btn-glow 0.4s linear infinite;
+}
+
+@keyframes party-btn-glow {
+  0%   { box-shadow: 0 0 16px #FF2BD6; background: #FF2BD6; }
+  33%  { box-shadow: 0 0 16px #28E7FF; background: #28E7FF; }
+  66%  { box-shadow: 0 0 16px #8B5CFF; background: #8B5CFF; }
+  100% { box-shadow: 0 0 16px #FF2BD6; background: #FF2BD6; }
+}
+
+/* Scanlines werden intensiver */
+[data-party="true"][data-theme="synthwave"] body::after {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 43, 214, 0.06) 2px,
+    rgba(255, 43, 214, 0.06) 3px
+  );
+  animation: party-scanlines 0.3s linear infinite;
+}
+
+@keyframes party-scanlines {
+  0%   { background-position-y: 0px; }
+  100% { background-position-y: 3px; }
+}

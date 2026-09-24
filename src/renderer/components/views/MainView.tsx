@@ -21,6 +21,7 @@ import { HealthBar } from '../ui/HealthBar'
 import { ToastContainer } from '../ui/ToastContainer'
 import { ProgressBar } from '../ui/ProgressBar'
 import { WindowControls } from '../ui/WindowControls'
+import { PartyButton } from '../ui/PartyButton'
 import { UpdateOverlay } from '../ui/UpdateOverlay'
 import { useUpdater } from '../../hooks/useUpdater'
 import './MainView.css'
@@ -127,6 +128,7 @@ export function MainView({ onSwitchToCompact, active = true }: Props) {
           <button className="btn-icon titlebar-settings-btn" onClick={() => setSettingsOpen(true)} title="Einstellungen">
             <Settings size={14} strokeWidth={2} />
           </button>
+          <PartyButton />
           <button className="compact-mode-switch" onClick={onSwitchToCompact} title="Kompakt-Modus aktivieren">
             <Layers size={11} strokeWidth={2} />
             <span className="compact-mode-label">Pro</span>

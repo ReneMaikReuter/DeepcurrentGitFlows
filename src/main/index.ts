@@ -259,6 +259,7 @@ function setupSecurityPolicies(): void {
             "script-src 'self'",
             "img-src 'self' data: https://avatars.githubusercontent.com",
             "connect-src 'self' https://api.github.com https://github.com https://objects.githubusercontent.com",
+            "media-src 'self' https://my.hidrive.com",
             "font-src 'self' data: https://fonts.gstatic.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "frame-src 'none'",

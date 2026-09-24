@@ -9,6 +9,13 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.7.6',
+    date: '24. September 2026',
+    changes: [
+      'Branch-Sidebar: Namen erscheinen nur noch bei aktiv arbeitenden Mitgliedern, nicht mehr bei jedem letzten Committer',
+    ],
+  },
+  {
     version: '0.7.4',
     date: '24. September 2026',
     changes: [

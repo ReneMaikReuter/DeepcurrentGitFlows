@@ -92,18 +92,6 @@ function createWindow(): void {
     mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'))
   }
 
-  // FancyZones / Windows Snap: force Electron to honour the new bounds after a snap resize.
-  // Without this, transparent frameless windows sometimes keep their old content size.
-  let resizeDebounce: ReturnType<typeof setTimeout> | null = null
-  mainWindow.on('resize', () => {
-    if (resizeDebounce) clearTimeout(resizeDebounce)
-    resizeDebounce = setTimeout(() => {
-      if (!mainWindow) return
-      const b = mainWindow.getBounds()
-      mainWindow.setBounds(b)
-    }, 50)
-  })
-
   mainWindow.on('close', () => {
     // Vor dem Schließen Acrylic deaktivieren damit kein Ghost-Frame sichtbar bleibt
     try {

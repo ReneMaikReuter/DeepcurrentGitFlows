@@ -9,6 +9,13 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.8.2',
+    date: '25. September 2026',
+    changes: [
+      'Bugfix: Fenster zittert beim Verschieben und Skalieren nicht mehr',
+    ],
+  },
+  {
     version: '0.8.1',
     date: '25. September 2026',
     changes: [

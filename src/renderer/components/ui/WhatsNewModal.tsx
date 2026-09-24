@@ -9,6 +9,15 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.9.0',
+    date: '25. September 2026',
+    changes: [
+      'Bass-Reaktion im Party-Modus: Sonne und Boden-Raster reagieren in Echtzeit auf den Beat',
+      'Web Audio API Analyser: mehr Bass = Sonne groesser, staerkerer Glow, Raster heller',
+      'Echtzeit-FFT auf dem HiDrive-Audio-Stream -- kein CPU-Overhead ausserhalb des Party-Modus',
+    ],
+  },
+  {
     version: '0.8.9',
     date: '25. September 2026',
     changes: [

@@ -111,17 +111,16 @@
 /* ── Party Mode — alles explodiert ─────────────────────────────────────── */
 [data-party="true"][data-theme="synthwave"] .sw-sun {
   opacity: 0.90;
-  filter: drop-shadow(0 0 50px rgba(255, 43, 214, 0.9));
-  animation: party-sun-pulse 1.6s ease-in-out infinite;
-}
-
-@keyframes party-sun-pulse {
-  0%, 100% { transform: scale(1);    opacity: 0.90; }
-  50%       { transform: scale(1.07); opacity: 1.0; }
+  /* Bass-reaktiv: --party-sun-scale und --party-glow werden per JS gesetzt */
+  transform: scale(var(--party-sun-scale, 1));
+  filter: drop-shadow(0 0 var(--party-glow, 50px) rgba(255, 43, 214, 0.9));
+  transition: transform 0.05s linear, filter 0.05s linear;
 }
 
 [data-party="true"][data-theme="synthwave"] .sw-grid {
-  opacity: 0.45;
+  /* Bass-reaktiv: --party-grid-alpha wird per JS gesetzt */
+  opacity: var(--party-grid-alpha, 0.45);
+  transition: opacity 0.05s linear;
   animation: party-grid-color 1s linear infinite;
 }
 

@@ -446,7 +446,7 @@ export interface AppSettings {
   backupRetentionCount: number
   backupAutoDelete: boolean
   protectedBranches: string[]
-  theme: 'dark' | 'light' | 'deepcurrent' | 'glass'
+  theme: 'dark' | 'light' | 'deepcurrent' | 'glass' | 'synthwave'
   fontSize: 'small' | 'normal' | 'large'
   language: 'de' | 'en'
   defaultBranch: string

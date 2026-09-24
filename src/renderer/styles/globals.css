@@ -244,6 +244,196 @@
   background: rgba(74, 59, 107, 0.20);
 }
 
+/* ── Synthwave 80s Theme ────────────────────────────────────────────────── */
+[data-theme="synthwave"] {
+  /* Backgrounds — tiefes Navy/Indigo */
+  --bg-app:      #080612;
+  --bg-surface:  #100B20;
+  --bg-elevated: #15102A;
+  --bg-hover:    #1C1438;
+  --bg-active:   #231847;
+  --bg-selected: rgba(255, 43, 214, 0.14);
+
+  /* Borders — dezentes Violett */
+  --border:        rgba(139, 92, 255, 0.22);
+  --border-strong: rgba(139, 92, 255, 0.42);
+  --border-focus:  #FF2BD6;
+
+  /* Text — helles Lavendel */
+  --text-primary:   #F4EEFF;
+  --text-secondary: #AAA0C4;
+  --text-muted:     #6E6490;
+  --text-disabled:  #3E3860;
+  --text-accent:    #FF2BD6;
+
+  /* Akzentfarben */
+  --accent:        #FF2BD6;
+  --accent-hover:  #FF4FA3;
+  --accent-dim:    rgba(255, 43, 214, 0.16);
+  --accent-subtle: rgba(255, 43, 214, 0.08);
+
+  /* Synthwave-spezifische Farbtokens */
+  --sw-magenta:  #FF2BD6;
+  --sw-cyan:     #28E7FF;
+  --sw-purple:   #8B5CFF;
+  --sw-pink:     #FF4FA3;
+  --sw-orange:   #FF8C42;
+  --sw-green:    #39FF9F;
+
+  /* Glow-Intensitäten */
+  --sw-glow-magenta: 0 0 8px rgba(255, 43, 214, 0.50);
+  --sw-glow-cyan:    0 0 8px rgba(40, 231, 255, 0.45);
+  --sw-glow-purple:  0 0 8px rgba(139, 92, 255, 0.40);
+
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.70);
+  --shadow:    0 4px 16px rgba(0,0,0,0.80);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.90);
+
+  /* Unreal Engine */
+  --unreal-accent: var(--sw-orange);
+  --unreal-dim:    rgba(255, 140, 66, 0.14);
+}
+
+/* Hintergrund: sehr dezenter violetter Verlauf + kaum sichtbare Scanlines */
+[data-theme="synthwave"] body {
+  background: #080612;
+  color: #F4EEFF;
+}
+
+[data-theme="synthwave"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 10%, rgba(139, 92, 255, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 80%, rgba(255, 43, 214, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(40, 231, 255, 0.04) 0%, transparent 50%);
+}
+
+/* sehr feine Scanlines — 1px jede 3px, kaum sichtbar */
+[data-theme="synthwave"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 3px
+  );
+}
+
+[data-theme="synthwave"] #root,
+[data-theme="synthwave"] .app-root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Panels: dunkle violette Flächen mit dezenter Border */
+[data-theme="synthwave"] .sidebar,
+[data-theme="synthwave"] .sidebar-panel {
+  background: #100B20;
+  border-right: 1px solid rgba(139, 92, 255, 0.28);
+}
+
+[data-theme="synthwave"] .titlebar {
+  background: #0D0919;
+  border-bottom: 1px solid rgba(139, 92, 255, 0.30);
+}
+
+[data-theme="synthwave"] .tab-bar {
+  background: #0D0919;
+  border-bottom: 1px solid rgba(139, 92, 255, 0.22);
+}
+
+/* Aktiver Tab: Magenta-Unterstrich */
+[data-theme="synthwave"] .tab-btn.active {
+  color: #FF2BD6;
+  border-bottom-color: #FF2BD6;
+  text-shadow: 0 0 6px rgba(255, 43, 214, 0.50);
+}
+
+[data-theme="synthwave"] .tab-btn:hover {
+  color: #AAA0C4;
+  background: rgba(139, 92, 255, 0.08);
+}
+
+/* Aktiver Branch: Cyan-Akzent */
+[data-theme="synthwave"] .branch-item-row.active {
+  background: rgba(40, 231, 255, 0.08);
+  border-left: 2px solid #28E7FF;
+}
+
+[data-theme="synthwave"] .branch-item-row:hover:not(.active) {
+  background: rgba(139, 92, 255, 0.10);
+}
+
+[data-theme="synthwave"] .branch-indicator--active {
+  background: #28E7FF !important;
+  box-shadow: 0 0 6px rgba(40, 231, 255, 0.60);
+}
+
+/* Buttons: dunkle Fläche, Cyan/Magenta bei Hover */
+[data-theme="synthwave"] .btn-primary {
+  background: #FF2BD6;
+  border-color: #FF2BD6;
+  color: #080612;
+  box-shadow: 0 0 10px rgba(255, 43, 214, 0.30);
+}
+
+[data-theme="synthwave"] .btn-primary:hover:not(:disabled) {
+  background: #FF4FA3;
+  border-color: #FF4FA3;
+  box-shadow: 0 0 14px rgba(255, 79, 163, 0.45);
+}
+
+[data-theme="synthwave"] .btn:hover:not(:disabled):not(.btn-primary):not(.btn-danger) {
+  border-color: rgba(40, 231, 255, 0.50);
+  color: #28E7FF;
+  box-shadow: 0 0 6px rgba(40, 231, 255, 0.20);
+}
+
+/* Inputs: dezente Synthwave-Border */
+[data-theme="synthwave"] input,
+[data-theme="synthwave"] textarea,
+[data-theme="synthwave"] select {
+  background: #0D0919;
+  border-color: rgba(139, 92, 255, 0.35);
+  color: #F4EEFF;
+}
+
+[data-theme="synthwave"] input:focus,
+[data-theme="synthwave"] textarea:focus,
+[data-theme="synthwave"] select:focus {
+  border-color: #FF2BD6;
+  box-shadow: 0 0 0 2px rgba(255, 43, 214, 0.18);
+  outline: none;
+}
+
+/* Git-Statusfarben */
+[data-theme="synthwave"] .file-status--modified  { color: #FF8C42; }
+[data-theme="synthwave"] .file-status--added     { color: #28E7FF; }
+[data-theme="synthwave"] .file-status--deleted   { color: #FF4FA3; }
+[data-theme="synthwave"] .file-status--renamed   { color: #8B5CFF; }
+[data-theme="synthwave"] .file-status--untracked { color: #AAA0C4; }
+[data-theme="synthwave"] .file-status--conflict  { color: #FF2BD6; }
+
+/* Panel-Sektionslabels */
+[data-theme="synthwave"] .panel-label {
+  color: rgba(40, 231, 255, 0.70);
+  letter-spacing: 0.08em;
+}
+
+/* Scrollbar */
+[data-theme="synthwave"] ::-webkit-scrollbar-track { background: #0D0919; }
+[data-theme="synthwave"] ::-webkit-scrollbar-thumb { background: rgba(139, 92, 255, 0.35); border-radius: 3px; }
+[data-theme="synthwave"] ::-webkit-scrollbar-thumb:hover { background: rgba(255, 43, 214, 0.50); }
+
 /* ── Light Theme ────────────────────────────────────────────────────────── */
 [data-theme="light"] {
   --bg-app:      #f5f5f7;

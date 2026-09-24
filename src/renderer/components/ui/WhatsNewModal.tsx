@@ -9,6 +9,16 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.8.5',
+    date: '25. September 2026',
+    changes: [
+      'Neues Theme: Synthwave 80s -- Neon-Violett, Magenta, Cyan auf tiefem Navy-Hintergrund',
+      'Einstellungen → Darstellung → Design → Synthwave 80s',
+      'Dezente Scanlines, violette Verlauf-Hintergründe, Neon-Akzente bei Hover/Fokus',
+      'Git-Status-Farben: Modified=Orange, Added=Cyan, Deleted=Pink, Conflict=Magenta',
+    ],
+  },
+  {
     version: '0.8.4',
     date: '25. September 2026',
     changes: [

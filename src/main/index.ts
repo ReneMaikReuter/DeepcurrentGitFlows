@@ -18,6 +18,7 @@ function getOverlayColors(theme: string): { bg: string; symbol: string } {
     case 'light':       return { bg: '#f5f5f7',   symbol: '#3a3a4a' }
     case 'deepcurrent': return { bg: '#07080c',   symbol: '#F2F1ED' }
     case 'glass':       return { bg: '#9b9ea0',   symbol: '#ffffff' }
+    case 'synthwave':   return { bg: '#100B20',   symbol: '#FF2BD6' }
     default:            return { bg: '#111113',   symbol: '#a0a0bc' }
   }
 }

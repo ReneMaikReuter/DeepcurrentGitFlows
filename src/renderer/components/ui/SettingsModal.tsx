@@ -154,6 +154,7 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
                 <option value="light">{t('settings_theme_light')}</option>
                 <option value="deepcurrent">Deepcurrent Studio</option>
                 <option value="glass">Glass (Acrylic)</option>
+                <option value="synthwave">Synthwave 80s</option>
               </select>
             </div>
 

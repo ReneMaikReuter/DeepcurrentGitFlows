@@ -10,10 +10,10 @@
 .titlebar {
   display: flex;
   align-items: center;
-  /* Platz für native Windows Snap-Buttons rechts — 138px = 3×46px (Win11 Standard) */
-  padding-right: max(calc(100% - env(titlebar-area-width, calc(100% - 138px))), 0px);
   height: var(--titlebar-h);
+  /* padding-left normal, padding-right reserviert Platz für native WCO-Snap-Buttons */
   padding: 0 0 0 var(--sp-4);
+  padding-right: max(calc(100% - env(titlebar-area-width, calc(100% - 138px))), 0px);
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;

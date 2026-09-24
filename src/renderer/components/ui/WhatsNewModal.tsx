@@ -9,6 +9,14 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.7.9',
+    date: '25. September 2026',
+    changes: [
+      'Bugfix: Pro-Switch und Statusleiste in der Titelleiste wieder sichtbar (CSS-Konflikt behoben)',
+      'Bugfix: Windows Snap Layouts funktionieren jetzt korrekt — Hover ueber Maximieren-Button zeigt Kachel-Auswahl',
+    ],
+  },
+  {
     version: '0.7.8',
     date: '25. September 2026',
     changes: [

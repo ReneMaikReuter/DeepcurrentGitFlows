@@ -9,6 +9,13 @@ interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.8.4',
+    date: '25. September 2026',
+    changes: [
+      'Glass-Theme: Nardo Grey (#9B9EA0) als Basis -- semi-transparent mit weisser Schrift',
+    ],
+  },
+  {
     version: '0.8.3',
     date: '25. September 2026',
     changes: [

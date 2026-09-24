@@ -114,33 +114,34 @@
   --input-h:       28px;
 }
 
-/* ── Glass Theme (Windows Acrylic / Dark) ───────────────────────────────── */
+/* ── Glass Theme (Windows Acrylic / Nardo Grey) ─────────────────────────── */
+/* Nardo Grey: #9B9EA0 (RGB 155,158,160) */
 [data-theme="glass"] {
-  --bg-app:      rgba(15, 15, 19, 0.06);
-  --bg-surface:  rgba(22, 22, 28, 0.70);
-  --bg-elevated: rgba(30, 30, 38, 0.80);
-  --bg-hover:    rgba(255, 255, 255, 0.06);
-  --bg-active:   rgba(255, 255, 255, 0.10);
-  --bg-selected: rgba(79, 142, 247, 0.18);
+  --bg-app:      rgba(155, 158, 160, 0.04);
+  --bg-surface:  rgba(155, 158, 160, 0.42);
+  --bg-elevated: rgba(168, 171, 173, 0.52);
+  --bg-hover:    rgba(255, 255, 255, 0.10);
+  --bg-active:   rgba(255, 255, 255, 0.16);
+  --bg-selected: rgba(79, 142, 247, 0.22);
 
-  --border:        rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
+  --border:        rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.24);
   --border-focus:  #4f8ef7;
 
-  --text-primary:   rgba(240, 240, 245, 0.96);
-  --text-secondary: rgba(200, 200, 210, 0.88);
-  --text-muted:     rgba(160, 160, 175, 0.72);
-  --text-disabled:  rgba(120, 120, 140, 0.45);
+  --text-primary:   rgba(255, 255, 255, 0.97);
+  --text-secondary: rgba(230, 232, 234, 0.90);
+  --text-muted:     rgba(200, 203, 206, 0.75);
+  --text-disabled:  rgba(170, 173, 176, 0.48);
   --text-accent:    #6ba8ff;
 
   --accent:       #4f8ef7;
   --accent-hover: #6ba8ff;
-  --accent-dim:   rgba(79, 142, 247, 0.18);
-  --accent-subtle:rgba(79, 142, 247, 0.09);
+  --accent-dim:   rgba(79, 142, 247, 0.20);
+  --accent-subtle:rgba(79, 142, 247, 0.10);
 
-  --shadow-sm: 0 1px 4px rgba(0,0,0,0.40);
-  --shadow:    0 4px 16px rgba(0,0,0,0.55);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.70);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.35);
+  --shadow:    0 4px 16px rgba(0,0,0,0.50);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.65);
 }
 
 /* Glass: body/root transparent damit Windows Acrylic-Blur durchscheint */
@@ -162,8 +163,8 @@
 [data-theme="glass"] .history-panel,
 [data-theme="glass"] .team-panel,
 [data-theme="glass"] .health-bar {
-  backdrop-filter: blur(18px) saturate(1.4) brightness(0.85);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4) brightness(0.85);
+  backdrop-filter: blur(24px) saturate(1.2) brightness(0.90);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2) brightness(0.90);
 }
 
 /* ── Deepcurrent Studio Theme ───────────────────────────────────────────── */

@@ -248,6 +248,8 @@ export const IPC = {
   BRANCH_CREATE: 'branch:create',
   BRANCH_DELETE: 'branch:delete',
   BRANCH_DELETE_REMOTE: 'branch:delete-remote',
+  BRANCH_RENAME: 'branch:rename',
+  BRANCH_CHECKOUT_REMOTE: 'branch:checkout-remote',
   BRANCH_PUSH: 'branch:push',
   BRANCH_MERGE: 'branch:merge',
   BRANCH_AHEAD_FILES: 'branch:ahead-files',
@@ -293,6 +295,11 @@ export const IPC = {
 
   // Team
   TEAM_GET: 'team:get',
+  TEAM_ACTIVITY: 'team:activity',
+
+  // Repo-wide config (stored in .deepcurrent/config.json, committed to git)
+  REPO_CONFIG_GET: 'repo:config:get',
+  REPO_CONFIG_SET: 'repo:config:set',
 
   // Logs
   LOG_GET: 'log:get',
@@ -319,6 +326,9 @@ export const IPC = {
   GITHUB_LIST_REPOS: 'github:list-repos',
   GITHUB_GET_USER: 'github:get-user',
 
+  // File history
+  GIT_FILE_LOG: 'git:file-log',
+
   // Push / Fetch progress (main → renderer)
   PUSH_PROGRESS: 'push:progress',
   FETCH_PROGRESS: 'fetch:progress',
@@ -335,6 +345,27 @@ export const IPC = {
   REMOTE_REMOVE: 'remote:remove',
   REMOTE_CREATE_GITHUB: 'remote:create-github',
   REMOTE_PUSH_INITIAL: 'remote:push-initial',
+  REMOTE_URL_GET: 'remote:url-get',
+
+  // Diff & Blame
+  GIT_DIFF_FILE: 'git:diff-file',
+  GIT_BLAME_FILE: 'git:blame-file',
+
+  // Stash
+  STASH_LIST: 'stash:list',
+  STASH_PUSH: 'stash:push',
+  STASH_POP: 'stash:pop',
+  STASH_DROP: 'stash:drop',
+  STASH_APPLY: 'stash:apply',
+
+  // Cherry-pick
+  HISTORY_CHERRY_PICK: 'history:cherry-pick',
+
+  // Pull Request
+  PR_CREATE: 'pr:create',
+
+  // Branch Graph
+  BRANCH_GRAPH_GET: 'branch:graph-get',
 } as const
 
 export type IpcChannel = (typeof IPC)[keyof typeof IPC]
@@ -359,6 +390,45 @@ export interface HistoryCommit {
   branches: string[]  // local + remote refs pointing to this commit
 }
 
+// ─── Diff & Blame ─────────────────────────────────────────────────────────────
+
+export interface DiffLine {
+  type: 'hunk' | 'add' | 'remove' | 'context' | 'meta'
+  content: string
+  oldLine?: number
+  newLine?: number
+}
+
+export interface BlameEntry {
+  line: number
+  hash: string
+  author: string
+  date: string
+  summary: string
+}
+
+// ─── Stash ────────────────────────────────────────────────────────────────────
+
+export interface StashEntry {
+  index: number
+  message: string
+  date: string
+  shortHash: string
+}
+
+// ─── Branch Graph ─────────────────────────────────────────────────────────────
+
+export interface GraphNode {
+  hash: string
+  shortHash: string
+  message: string
+  author: string
+  date: number
+  refs: string[]
+  parents: string[]
+  lane: number
+}
+
 // ─── Conflict Resolution ──────────────────────────────────────────────────────
 
 export type ConflictResolution = 'keep-mine' | 'keep-remote' | 'abort'
@@ -376,7 +446,7 @@ export interface AppSettings {
   backupRetentionCount: number
   backupAutoDelete: boolean
   protectedBranches: string[]
-  theme: 'dark' | 'light'
+  theme: 'dark' | 'light' | 'deepcurrent' | 'glass'
   fontSize: 'small' | 'normal' | 'large'
   language: 'de' | 'en'
   defaultBranch: string
@@ -398,7 +468,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   fontSize: 'normal',
   language: 'de',
   defaultBranch: 'main',
-  lfsAutoLock: false,
+  lfsAutoLock: true,
   gitignorePatterns: [],
   githubTokenEncrypted: null,
   termsAccepted: false,

@@ -13,20 +13,28 @@ import { UpdateOverlay } from '../ui/UpdateOverlay'
 import { useUpdater } from '../../hooks/useUpdater'
 import { toast } from '../../store/toastStore'
 import { TeamPanel } from '../ui/TeamPanel'
+import { TutorialOverlay } from '../ui/TutorialOverlay'
+import { useTutorialStore, DEMO_REPO, DEMO_BRANCHES, DEMO_FILES, DEMO_HEALTH } from '../../store/tutorialStore'
+import { TUTORIAL_STEPS } from '../ui/tutorialSteps'
 import type { AppSettings } from '../../../shared/types'
 import './CompactView.css'
 
 function applyFontSize(size: AppSettings['fontSize']) {
   const zoom = size === 'small' ? '0.88' : size === 'large' ? '1.14' : '1'
-  ;(document.getElementById('root') as HTMLElement).style.zoom = zoom
+  const root = document.getElementById('root') as HTMLElement | null
+  if (root && root.style.zoom !== zoom) root.style.zoom = zoom
 }
 
 interface Props {
   onSwitchToPro: () => void
+  active?: boolean
 }
 
-export function CompactView({ onSwitchToPro }: Props) {
-  const { currentRepo, health, changedFiles, selectedFiles, toggleFileSelection, selectAllFiles, deselectAllFiles, commit, startSync, isSyncing, branches, switchBranch } = useRepoStore()
+export function CompactView({ onSwitchToPro, active = true }: Props) {
+  const tutorial = useTutorialStore()
+  const isTutorial = tutorial.active
+
+  const realStore = useRepoStore()
   const { state: updater, checkForUpdates, installNow, dismiss } = useUpdater()
   const [message, setMessage] = useState('')
   const [committing, setCommitting] = useState(false)
@@ -39,6 +47,48 @@ export function CompactView({ onSwitchToPro }: Props) {
   const [activeTab, setActiveTab] = useState<'changes' | 'team'>('changes')
   const { setLang } = useLangStore()
   const t = useT()
+
+  // When tutorial is active, use demo data
+  const currentRepo = isTutorial ? DEMO_REPO : realStore.currentRepo
+  const health = isTutorial ? DEMO_HEALTH : realStore.health
+  const changedFiles = isTutorial ? DEMO_FILES : realStore.changedFiles
+  const branches = isTutorial ? DEMO_BRANCHES : realStore.branches
+  const isSyncing = isTutorial ? false : realStore.isSyncing
+  const selectedFiles = isTutorial ? tutorial.selectedFilePaths : realStore.selectedFiles
+
+  const toggleFileSelection = (path: string) => {
+    if (isTutorial) {
+      const next = new Set(tutorial.selectedFilePaths)
+      if (next.has(path)) next.delete(path); else next.add(path)
+      tutorial.setSelectedFilePaths(next)
+    } else {
+      realStore.toggleFileSelection(path)
+    }
+  }
+  const selectAllFiles = () => {
+    if (isTutorial) tutorial.setSelectedFilePaths(new Set(DEMO_FILES.map((f) => f.path)))
+    else realStore.selectAllFiles()
+  }
+  const deselectAllFiles = () => {
+    if (isTutorial) tutorial.setSelectedFilePaths(new Set())
+    else realStore.deselectAllFiles()
+  }
+
+  // Apply tutorial-driven UI state when step changes
+  useEffect(() => {
+    if (!isTutorial) return
+    const step = TUTORIAL_STEPS[tutorial.step]
+    if (!step.uiState) return
+    const s = step.uiState
+    if (s.branchMenuOpen !== undefined) setBranchMenuOpen(s.branchMenuOpen)
+    if (s.activeTab !== undefined) setActiveTab(s.activeTab)
+    if (s.commitMessage !== undefined) setMessage(s.commitMessage)
+    if (s.selectAllFiles !== undefined) {
+      if (s.selectAllFiles) tutorial.setSelectedFilePaths(new Set(DEMO_FILES.map((f) => f.path)))
+      else tutorial.setSelectedFilePaths(new Set())
+    }
+    if (s.ueRunning !== undefined) setUeRunning(s.ueRunning)
+  }, [isTutorial, tutorial.step])
 
   const currentBranch = branches.find((b) => b.isCurrent)
   const aheadBy = currentBranch?.aheadBy ?? 0
@@ -54,6 +104,7 @@ export function CompactView({ onSwitchToPro }: Props) {
   }, [])
 
   useEffect(() => {
+    if (!active) return
     const check = async () => {
       const running = await ipc.invoke<boolean>(IPC.UNREAL_IS_RUNNING)
       setUeRunning(!!running)
@@ -61,22 +112,25 @@ export function CompactView({ onSwitchToPro }: Props) {
     check()
     const i = setInterval(check, 5000)
     return () => clearInterval(i)
-  }, [])
+  }, [active])
 
   const handleCommit = async () => {
     if (!message.trim() || selectedFiles.size === 0) return
+    if (isTutorial) { toast.ok('Tutorial: Commit simuliert.'); setMessage(''); return }
     setCommitting(true)
-    await commit(message.trim(), false)
+    await realStore.commit(message.trim(), false)
     setMessage('')
     setCommitting(false)
   }
 
   const handleSync = async () => {
-    await startSync()
+    if (isTutorial) { toast.ok('Tutorial: Sync simuliert.'); return }
+    await realStore.startSync()
   }
 
   const handlePush = async () => {
     if (!currentRepo || !currentBranch?.name) return
+    if (isTutorial) { toast.ok('Tutorial: Push simuliert.'); return }
     setPushing(true)
     const res = await ipc.invoke<{ success: boolean; error: string | null }>(IPC.BRANCH_PUSH, currentRepo.path, currentBranch.name)
     setPushing(false)
@@ -87,8 +141,9 @@ export function CompactView({ onSwitchToPro }: Props) {
   const handleBranchSwitch = async (name: string) => {
     setBranchMenuOpen(false)
     if (name === currentBranch?.name) return
+    if (isTutorial) { toast.ok(`Tutorial: Branch „${name}" gewählt.`); return }
     setSwitching(true)
-    const result = await switchBranch(name)
+    const result = await realStore.switchBranch(name)
     setSwitching(false)
     if (result.requiresAction) setSwitchModal(name)
     else if (result.error) toast.err(result.error)
@@ -96,10 +151,11 @@ export function CompactView({ onSwitchToPro }: Props) {
 
   const allSelected = changedFiles.length > 0 && selectedFiles.size === changedFiles.length
 
-  if (!currentRepo) return null
+  if (!currentRepo && !isTutorial) return null
 
   return (
     <div className="compact-root">
+      {isTutorial && <TutorialOverlay />}
       <ProgressBar />
       <ToastContainer />
 
@@ -121,16 +177,16 @@ export function CompactView({ onSwitchToPro }: Props) {
       <div className="titlebar compact-titlebar">
         <span className="titlebar-app">Deepcurrent Git Flows</span>
         <span className="titlebar-sep">/</span>
-        <span className="titlebar-repo truncate">{currentRepo.name}</span>
+        <span className="titlebar-repo truncate" data-tid="repo-name">{currentRepo?.name ?? 'EchoesOfMyran-Demo'}</span>
         <div className="titlebar-spacer" />
         <div className="titlebar-status">
-          {isUnreal && ueRunning && (
-            <span className="titlebar-safe-mode">
+          {(isUnreal && ueRunning) && (
+            <span className="titlebar-safe-mode" data-tid="safe-mode">
               <Shield size={11} strokeWidth={2.5} />
               {t('unreal_safe_mode')}
             </span>
           )}
-          <HealthBar compact />
+          <span data-tid="health-bar"><HealthBar compact /></span>
           <button className="btn-icon titlebar-settings-btn" onClick={() => setSettingsOpen(true)} title="Einstellungen">
             <Settings size={14} strokeWidth={2} />
           </button>
@@ -152,13 +208,14 @@ export function CompactView({ onSwitchToPro }: Props) {
             onClick={() => setBranchMenuOpen((v) => !v)}
             disabled={switching}
             title="Branch wechseln"
+            data-tid="branch-btn"
           >
             <GitBranch size={11} strokeWidth={2} />
             <span className="compact-branch-name">{currentBranch?.name ?? '...'}</span>
             <ChevronDown size={10} strokeWidth={2} />
           </button>
           {branchMenuOpen && (
-            <div className="compact-branch-dropdown">
+            <div className="compact-branch-dropdown" data-tid="branch-dropdown">
               {branches.filter((b) => !b.isRemote).map((b) => (
                 <button
                   key={b.name}
@@ -191,6 +248,7 @@ export function CompactView({ onSwitchToPro }: Props) {
           onClick={handleSync}
           disabled={isSyncing}
           title="Sync mit Remote"
+          data-tid="sync-btn"
         >
           <RefreshCw size={11} strokeWidth={2} className={isSyncing ? 'spin' : ''} />
           Sync
@@ -199,10 +257,10 @@ export function CompactView({ onSwitchToPro }: Props) {
 
       {/* Tab bar */}
       <div className="compact-tabs">
-        <button className={`compact-tab ${activeTab === 'changes' ? 'active' : ''}`} onClick={() => setActiveTab('changes')}>
+        <button className={`compact-tab ${activeTab === 'changes' ? 'active' : ''}`} onClick={() => setActiveTab('changes')} data-tid="changes-tab">
           Änderungen
         </button>
-        <button className={`compact-tab ${activeTab === 'team' ? 'active' : ''}`} onClick={() => setActiveTab('team')}>
+        <button className={`compact-tab ${activeTab === 'team' ? 'active' : ''}`} onClick={() => setActiveTab('team')} data-tid="team-tab">
           <Users size={11} strokeWidth={2} style={{ display: 'inline', marginRight: 4 }} />
           Team
         </button>
@@ -216,7 +274,7 @@ export function CompactView({ onSwitchToPro }: Props) {
       )}
 
       {/* File list */}
-      <div className="compact-files" style={{ display: activeTab === 'changes' ? undefined : 'none' }}>
+      <div className="compact-files" style={{ display: activeTab === 'changes' ? undefined : 'none' }} data-tid="file-list">
         {changedFiles.length === 0 ? (
           <div className="compact-empty">Keine Änderungen</div>
         ) : (
@@ -249,7 +307,7 @@ export function CompactView({ onSwitchToPro }: Props) {
       </div>
 
       {/* Commit area */}
-      {activeTab === 'changes' && <div className="compact-commit">
+      {activeTab === 'changes' && <div className="compact-commit" data-tid="commit-area">
         <textarea
           className="compact-commit-input"
           placeholder="Commit-Nachricht..."

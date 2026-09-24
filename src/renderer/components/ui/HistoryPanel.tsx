@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from 'react'
-import { RotateCcw, ChevronDown, ChevronRight, FileX, FilePlus, FileEdit, Cloud, HardDrive, Search, X } from 'lucide-react'
+import { RotateCcw, ChevronDown, ChevronRight, FileX, FilePlus, FileEdit, Cloud, HardDrive, Search, X, GitCommit } from 'lucide-react'
 import { ipc, IPC } from '../../hooks/useIpc'
 import { useRepoStore } from '../../store/repoStore'
 import { useT, t as tFn } from '../../i18n/useT'
+import { toast } from '../../store/toastStore'
 import type { HistoryCommit, HistoryFile } from '../../../shared/types'
 import './HistoryPanel.css'
 
@@ -61,14 +62,16 @@ interface CommitRowProps {
   onRestoreFiles: (hash: string, files: string[], statuses: Record<string, string>) => Promise<void>
   onUndoCommit: (hash: string) => Promise<void>
   onRevertCommit: (hash: string) => Promise<void>
+  onCherryPick: (hash: string) => Promise<void>
   scrollRef?: (el: HTMLDivElement | null) => void
 }
 
-function CommitRow({ commit, isHead, query, onRestoreFiles, onUndoCommit, onRevertCommit, scrollRef }: CommitRowProps) {
+function CommitRow({ commit, isHead, query, onRestoreFiles, onUndoCommit, onRevertCommit, onCherryPick, scrollRef }: CommitRowProps) {
   const [expanded, setExpanded] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [working, setWorking] = useState(false)
   const [confirmRevert, setConfirmRevert] = useState(false)
+  const [confirmCherryPick, setConfirmCherryPick] = useState(false)
 
   const shouldExpand = expanded
 
@@ -188,6 +191,26 @@ function CommitRow({ commit, isHead, query, onRestoreFiles, onUndoCommit, onReve
               </>
             )}
             <div style={{ display: 'flex', gap: 4, marginLeft: 'auto', alignItems: 'center' }}>
+              {!isHead && (
+                confirmCherryPick ? (
+                  <>
+                    <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>Cherry-pick auf aktuellen Branch?</span>
+                    <button className="btn btn-primary btn-sm" style={{ height: 18, fontSize: 10 }} disabled={working} onClick={async () => { setConfirmCherryPick(false); setWorking(true); await onCherryPick(commit.hash); setWorking(false) }}>Ja</button>
+                    <button className="btn btn-ghost btn-sm" style={{ height: 18, fontSize: 10 }} onClick={() => setConfirmCherryPick(false)}>Nein</button>
+                  </>
+                ) : (
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    style={{ color: 'var(--text-secondary)' }}
+                    disabled={working}
+                    onClick={() => setConfirmCherryPick(true)}
+                    title="Diesen Commit auf den aktuellen Branch übertragen"
+                  >
+                    <GitCommit size={11} />
+                    Cherry-pick
+                  </button>
+                )
+              )}
               {isHead && !commit.pushedToRemote && (
                 <button
                   className="btn btn-ghost btn-sm"
@@ -298,6 +321,16 @@ export function HistoryPanel() {
     await load()
   }
 
+  const handleCherryPick = async (hash: string) => {
+    if (!currentRepo) return
+    const res = await ipc.invoke<{ success: boolean; error?: string }>(IPC.HISTORY_CHERRY_PICK, currentRepo.path, hash)
+    if (!res.success) { toast.err(res.error ?? 'Cherry-pick fehlgeschlagen.'); return }
+    toast.ok('Cherry-pick erfolgreich.')
+    await refreshStatus()
+    await refreshBranches()
+    await load()
+  }
+
   const handleUndoAllUnpushed = async () => {
     if (!currentRepo || !currentBranch) return
     setRestoreError(null)
@@ -390,6 +423,7 @@ export function HistoryPanel() {
               onUndoCommit={handleUndoCommit}
               onRevertCommit={handleRevertCommit}
               scrollRef={isFirstMatch ? (el) => { firstMatchRef.current = el } : undefined}
+              onCherryPick={handleCherryPick}
             />
           )
         })}

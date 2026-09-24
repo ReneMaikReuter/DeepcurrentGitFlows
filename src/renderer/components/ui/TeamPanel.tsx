@@ -1,25 +1,56 @@
 import { useState, useEffect } from 'react'
-import { RefreshCw, ChevronDown, ChevronRight, Lock, Unlock, FileWarning } from 'lucide-react'
+import { RefreshCw, Lock, Unlock, ChevronRight, ChevronDown, GitBranch } from 'lucide-react'
 import { useRepoStore } from '../../store/repoStore'
 import { ipc, IPC } from '../../hooks/useIpc'
-import { useT } from '../../i18n/useT'
+import { toast } from '../../store/toastStore'
 import type { LfsLock } from '../../../shared/types'
 import './TeamPanel.css'
 
 function timeAgo(ms: number | null): string {
-  if (!ms) return 'unknown'
+  if (!ms) return ''
   const diff = Date.now() - ms
   const m = Math.floor(diff / 60000)
   const h = Math.floor(diff / 3600000)
   const d = Math.floor(diff / 86400000)
-  if (d > 0) return `${d}d ago`
-  if (h > 0) return `${h}h ago`
-  if (m > 0) return `${m}m ago`
-  return 'just now'
+  if (d > 0) return `vor ${d}d`
+  if (h > 0) return `vor ${h}h`
+  if (m > 0) return `vor ${m}m`
+  return 'gerade eben'
 }
 
 function assetName(path: string): string {
   return path.split('/').pop() ?? path
+}
+
+function smartPath(path: string): string {
+  // Content/__ExternalActors__/ProjectFolder/LevelName/0/AB/HASH.uasset
+  // Show "ProjectFolder / LevelName (External Actor)" — the level name is the meaningful part
+  const extActorMatch = path.match(/Content\/__ExternalActors__\/([^/]+)\/([^/]+)/)
+  if (extActorMatch) return `${extActorMatch[1]} / ${extActorMatch[2]} (External Actor)`
+  const extActorShort = path.match(/Content\/__ExternalActors__\/([^/]+)/)
+  if (extActorShort) return `${extActorShort[1]} (External Actor)`
+
+  const extObjectMatch = path.match(/Content\/__ExternalObjects__\/([^/]+)\/([^/]+)/)
+  if (extObjectMatch) return `${extObjectMatch[1]} / ${extObjectMatch[2]} (External Object)`
+  const extObjectShort = path.match(/Content\/__ExternalObjects__\/([^/]+)/)
+  if (extObjectShort) return `${extObjectShort[1]} (External Object)`
+
+  // Regular Content path — show from Content/ onward, max 4 segments
+  const contentIdx = path.indexOf('Content/')
+  if (contentIdx !== -1) {
+    const rel = path.slice(contentIdx)
+    const parts = rel.split('/')
+    if (parts.length > 4) return parts.slice(0, 4).join('/') + '/…'
+    return rel
+  }
+  return path
+}
+
+interface PersonEntry {
+  name: string
+  branches: string[]
+  locks: LfsLock[]
+  isMe: boolean
 }
 
 interface TeamPanelProps {
@@ -27,259 +58,240 @@ interface TeamPanelProps {
 }
 
 export function TeamPanel({ expanded = false }: TeamPanelProps) {
-  const t = useT()
-  const { team, loadTeam, currentRepo, currentBranch, changedFiles } = useRepoStore()
-  const [expandedMembers, setExpandedMembers] = useState<Set<string>>(new Set())
+  const { currentRepo, currentBranch, changedFiles, refreshBranches } = useRepoStore()
   const [locks, setLocks] = useState<LfsLock[]>([])
-  const [lockMsg, setLockMsg] = useState<{ ok: boolean; text: string; forceAction?: () => void } | null>(null)
+  const [myName, setMyName] = useState<string>('')
+  const [activity, setActivity] = useState<Record<string, string[]>>({})
   const [working, setWorking] = useState<string | null>(null)
+  const [confirmForce, setConfirmForce] = useState<{ lockId: string; path: string } | null>(null)
+  const [openCards, setOpenCards] = useState<Set<string>>(new Set(['me']))
+  const [refreshing, setRefreshing] = useState(false)
 
   const loadLocks = async () => {
     if (!currentRepo) return
     const list = await ipc.invoke<LfsLock[]>(IPC.LFS_LIST_LOCKS, currentRepo.path)
-    setLocks(list ?? [])
+    setLocks(Array.isArray(list) ? list : [])
+  }
+
+  const loadActivity = async () => {
+    if (!currentRepo) return
+    const result = await ipc.invoke<Record<string, string[]>>(IPC.TEAM_ACTIVITY, currentRepo.path)
+    if (result && typeof result === 'object') setActivity(result)
   }
 
   useEffect(() => {
-    loadTeam()
-    loadLocks()
+    ;(window as any).deepcurrent?.invoke('git:user-info', currentRepo?.path)
+      .then((info: { name: string } | null) => { if (info?.name) setMyName(info.name) })
+      .catch(() => {})
   }, [currentRepo?.path])
 
-  const toggleMember = (branch: string) => {
-    setExpandedMembers((prev) => {
-      const next = new Set(prev)
-      if (next.has(branch)) next.delete(branch)
-      else next.add(branch)
-      return next
-    })
-  }
+  useEffect(() => {
+    loadLocks()
+    loadActivity()
+    const lockInterval = setInterval(loadLocks, 5000)
+    const activityInterval = setInterval(loadActivity, 30000)
+    return () => { clearInterval(lockInterval); clearInterval(activityInterval) }
+  }, [currentRepo?.path])
 
-  const handleLock = async (path: string) => {
-    if (!currentRepo) return
-    setWorking(path)
-    setLockMsg(null)
-    const res = await ipc.invoke<{ success: boolean; error: string | null }>(IPC.LFS_LOCK, currentRepo.path, path)
-    setWorking(null)
-    if (res.success) {
-      setLockMsg({ ok: true, text: `"${assetName(path)}" gesperrt.` })
-      await loadLocks()
-    } else {
-      setLockMsg({ ok: false, text: res.error ?? 'Lock fehlgeschlagen.' })
-    }
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await Promise.all([loadLocks(), loadActivity(), refreshBranches()])
+    setRefreshing(false)
   }
 
   const handleUnlock = async (lockId: string, path: string, force = false) => {
     if (!currentRepo) return
     setWorking(lockId)
-    setLockMsg(null)
     const res = await ipc.invoke<{ success: boolean; error: string | null }>(IPC.LFS_UNLOCK, currentRepo.path, path, force)
     setWorking(null)
     if (res.success) {
-      setLockMsg({ ok: true, text: `"${assetName(path)}" entsperrt.` })
+      toast.ok(`"${assetName(path)}" entsperrt.`)
       await loadLocks()
-    } else if (!force && res.error && res.error.toLowerCase().includes('uncommitted')) {
-      setLockMsg({
-        ok: false,
-        text: `Datei hat ungespeicherte Aenderungen. Trotzdem entsperren?`,
-        forceAction: () => handleUnlock(lockId, path, true),
-      })
+    } else if (!force && res.error?.toLowerCase().includes('uncommitted')) {
+      setConfirmForce({ lockId, path })
     } else {
-      setLockMsg({ ok: false, text: res.error ?? 'Unlock fehlgeschlagen.' })
+      toast.err(res.error ?? 'Unlock fehlgeschlagen.')
     }
   }
 
-  const myLocks = locks // all locks visible to this client
+  const handleLock = async (path: string) => {
+    if (!currentRepo) return
+    setWorking(path)
+    const res = await ipc.invoke<{ success: boolean; error: string | null }>(IPC.LFS_LOCK, currentRepo.path, path)
+    setWorking(null)
+    if (res.success) { toast.ok(`"${assetName(path)}" gesperrt.`); await loadLocks() }
+    else toast.err(res.error ?? 'Lock fehlgeschlagen.')
+  }
 
-  if (team.length === 0 && !expanded) return null
+  const toggleCard = (name: string) => {
+    setOpenCards((prev) => {
+      const next = new Set(prev)
+      next.has(name) ? next.delete(name) : next.add(name)
+      return next
+    })
+  }
+
+  // Build person map from recent git activity + LFS locks
+  const personMap = new Map<string, PersonEntry>()
+  const meKey = myName || 'Du'
+
+  const addPerson = (name: string, branch?: string, isMe = false) => {
+    if (!name) return
+    const existing = personMap.get(name) ?? { name, branches: [], locks: [], isMe }
+    if (branch && !existing.branches.includes(branch)) existing.branches.push(branch)
+    existing.isMe = existing.isMe || isMe
+    personMap.set(name, existing)
+  }
+
+  // My own entry
+  addPerson(meKey, currentBranch ?? undefined, true)
+
+  // Others from recent git activity (last 30 days on remote branches)
+  for (const [author, authorBranches] of Object.entries(activity)) {
+    if (author === meKey) continue
+    for (const branch of authorBranches) addPerson(author, branch)
+  }
+
+  // Add lock owners (they're definitely active)
+  for (const lock of locks) {
+    if (!lock.owner) continue
+    const isLockMe = lock.owner === meKey
+    addPerson(lock.owner, undefined, isLockMe)
+    const entry = personMap.get(lock.owner)!
+    if (!entry.locks.find((l) => l.id === lock.id)) entry.locks.push(lock)
+  }
+
+  const persons = Array.from(personMap.values()).sort((a, b) => {
+    if (a.isMe) return -1
+    if (b.isMe) return 1
+    return a.name.localeCompare(b.name)
+  })
 
   return (
     <div className={`team-panel ${expanded ? 'expanded' : ''}`}>
       <div className="team-header">
         <span className="team-label">Team</span>
-        <button className="btn-icon" title="Refresh" onClick={() => { loadTeam(); loadLocks() }}>
+        <button className={`btn-icon${refreshing ? ' spin' : ''}`} title="Aktualisieren" onClick={handleRefresh} disabled={refreshing}>
           <RefreshCw size={11} strokeWidth={2} />
         </button>
       </div>
 
-      {lockMsg && (
-        <div className={`team-lock-msg ${lockMsg.ok ? 'team-lock-msg--ok' : 'team-lock-msg--err'}`}>
-          <span onClick={() => setLockMsg(null)}>{lockMsg.text}</span>
-          {lockMsg.forceAction && (
-            <button
-              className="btn btn-ghost btn-sm"
-              style={{ marginLeft: 8, height: 18, fontSize: 10, padding: '0 6px' }}
-              onClick={() => { setLockMsg(null); lockMsg.forceAction!() }}
-            >
-              Ja
-            </button>
-          )}
+      {confirmForce && (
+        <div className="team-lock-msg team-lock-msg--err">
+          <span>Datei hat ungespeicherte Änderungen. Trotzdem entsperren?</span>
+          <button className="btn btn-ghost btn-sm" style={{ marginLeft: 8, height: 18, fontSize: 10, padding: '0 6px' }}
+            onClick={() => { const cf = confirmForce; setConfirmForce(null); handleUnlock(cf.lockId, cf.path, true) }}>
+            Ja
+          </button>
+          <button className="btn btn-ghost btn-sm" style={{ marginLeft: 4, height: 18, fontSize: 10, padding: '0 6px' }}
+            onClick={() => setConfirmForce(null)}>
+            Nein
+          </button>
         </div>
       )}
 
-      {/* LFS Locks section */}
-      {myLocks.length > 0 && (
-        <div className="team-locks-section">
-          <div className="team-locks-title">
-            <Lock size={10} strokeWidth={2} />
-            {t('team_locked_assets')} ({myLocks.length})
-          </div>
-          {myLocks.map((lock) => (
-            <div key={lock.id} className="team-lock-row">
-              <FileWarning size={11} strokeWidth={2} style={{ color: 'var(--warning)', flexShrink: 0 }} />
-              <div className="team-lock-info">
-                <div className="team-lock-path truncate" title={lock.path}>{assetName(lock.path)}</div>
-                <div className="team-lock-owner">{t('team_locked_by')} {lock.owner}{lock.lockedAt ? ` · ${timeAgo(lock.lockedAt)}` : ''}</div>
-              </div>
-              <button
-                className="btn-icon"
-                title="Entsperren"
-                disabled={working === lock.id}
-                onClick={() => handleUnlock(lock.id, lock.path)}
-              >
-                <Unlock size={11} strokeWidth={2} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="team-persons">
+        {persons.map((person) => {
+          const isOpen = openCards.has(person.name)
+          const myFiles = person.isMe ? changedFiles : []
+          const hasContent = person.locks.length > 0 || myFiles.length > 0
+          const summary: string[] = []
+          if (myFiles.length > 0) summary.push(`${myFiles.length} Änderung${myFiles.length !== 1 ? 'en' : ''}`)
+          if (person.locks.length > 0) summary.push(`${person.locks.length} gesperrt`)
 
-      {/* My activity — changed files + own locks */}
-      {currentBranch && (
-        <div className="team-my-section">
-          <div className="team-locks-title">
-            {t('team_my_activity')}
-          </div>
-          <div className="team-member-row" style={{ cursor: 'default' }}>
-            <div className="team-avatar" style={{ background: 'var(--accent-dim)', color: 'var(--accent)', fontSize: 9 }}>Du</div>
-            <div className="team-member-info">
-              <div className="team-member-name">{t('team_active_branch')}: <strong>{currentBranch}</strong></div>
-              {changedFiles.length > 0 ? (
-                <div className="team-member-branch">{changedFiles.length} {t('team_files_in_progress')}</div>
-              ) : locks.length > 0 ? (
-                <div className="team-member-branch">{locks.length} {t('team_locked')}</div>
-              ) : (
-                <div className="team-member-branch" style={{ color: 'var(--text-disabled)' }}>{t('team_no_changes')}</div>
-              )}
-            </div>
-          </div>
-
-          {/* Changed files */}
-          {changedFiles.length > 0 && (
-            <div className="team-files" style={{ marginTop: 'var(--sp-2)', maxHeight: 320, overflowY: 'auto' }}>
-              {changedFiles.map((f) => {
-                const lock = locks.find((l) => l.path === f.path)
-                const STATUS: Record<string, string> = { modified: 'M', added: 'A', deleted: 'D', renamed: 'R', untracked: '?', conflicted: '!' }
-                return (
-                  <div key={f.path} className={`team-file ${lock ? 'team-file--locked' : ''}`}>
-                    <span style={{
-                      fontSize: 9, fontWeight: 700, width: 12, textAlign: 'center', flexShrink: 0,
-                      color: f.status === 'added' || f.status === 'untracked' ? 'var(--success)' :
-                             f.status === 'deleted' ? 'var(--error)' :
-                             f.status === 'conflicted' ? 'var(--error)' : 'var(--warning)'
-                    }}>
-                      {STATUS[f.status] ?? '?'}
-                    </span>
-                    <span className="team-file-name" title={f.path} style={{ wordBreak: 'break-all', lineHeight: 1.3 }}>{f.path}</span>
-                    {lock
-                      ? <span className="team-file-locked-label">gesperrt</span>
-                      : f.path.match(/\.(uasset|umap|ubulk)$/i) && (
-                          <button
-                            className="team-lock-btn"
-                            title={`"${assetName(f.path)}" sperren`}
-                            disabled={working === f.path}
-                            onClick={() => handleLock(f.path)}
-                          >
-                            <Lock size={10} strokeWidth={2} />
-                          </button>
-                        )
-                    }
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* LFS locks (assets locked but not necessarily changed) */}
-          {locks.filter((l) => !changedFiles.find((f) => f.path === l.path)).length > 0 && (
-            <div className="team-files" style={{ marginTop: 'var(--sp-1)' }}>
-              {locks.filter((l) => !changedFiles.find((f) => f.path === l.path)).map((lock) => (
-                <div key={lock.id} className="team-file team-file--locked">
-                  <Lock size={10} strokeWidth={2} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                  <span className="team-file-name truncate" title={lock.path}>{assetName(lock.path)}</span>
-                  <button
-                    className="team-lock-btn"
-                    style={{ opacity: 1, color: 'var(--text-secondary)' }}
-                    title="Entsperren"
-                    disabled={working === lock.id}
-                    onClick={() => handleUnlock(lock.id, lock.path)}
-                  >
-                    <Unlock size={10} strokeWidth={2} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Team members */}
-      {team.length === 0 ? (
-        <div className="team-empty">{t('team_no_members')}</div>
-      ) : (
-        team.map((member) => {
-          const isExpanded = expandedMembers.has(member.branch)
           return (
-            <div key={member.branch} className="team-member">
-              <div className="team-member-row" onClick={() => member.lastFiles.length > 0 && toggleMember(member.branch)}>
-                <div className="team-avatar">{member.name.charAt(0).toUpperCase()}</div>
-                <div className="team-member-info">
-                  <div className="team-member-name">{member.name}</div>
-                  <div className="team-member-branch truncate">{member.branch}</div>
-                  {member.lastActivity && (
-                    <div className="team-member-time">{timeAgo(member.lastActivity)}</div>
+            <div key={person.name} className="team-person-card">
+              {/* Card header — always visible */}
+              <button
+                className={`team-person-header${isOpen ? ' open' : ''}`}
+                onClick={() => hasContent && toggleCard(person.name)}
+                style={{ cursor: hasContent ? 'pointer' : 'default' }}
+              >
+                <div className="team-person-avatar" style={person.isMe ? { background: 'var(--accent-dim)', color: 'var(--accent)' } : {}}>
+                  {person.isMe ? 'Du' : person.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="team-person-info">
+                  <div className="team-person-name">{person.isMe ? `Du (${person.name})` : person.name}</div>
+                  {person.branches.length > 0 && (
+                    <div className="team-person-branch">
+                      <GitBranch size={9} strokeWidth={2} />
+                      {person.branches.join(', ')}
+                    </div>
+                  )}
+                  {summary.length > 0 && (
+                    <div className="team-person-summary">{summary.join(' · ')}</div>
+                  )}
+                  {summary.length === 0 && (
+                    <div className="team-person-summary" style={{ color: 'var(--text-disabled)' }}>Keine Aktivität</div>
                   )}
                 </div>
-                {member.lastFiles.length > 0 && (
-                  <div className="team-member-meta">
-                    <span className="team-file-count">{member.lastFiles.length} file{member.lastFiles.length !== 1 ? 's' : ''}</span>
-                    {isExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                {hasContent && (
+                  <div className="team-person-chevron">
+                    {isOpen ? <ChevronDown size={12} strokeWidth={2} /> : <ChevronRight size={12} strokeWidth={2} />}
                   </div>
                 )}
-              </div>
+              </button>
 
-              {isExpanded && member.lastFiles.length > 0 && (
-                <div className="team-files">
-                  {member.lastFiles.map((f) => {
-                    const lock = locks.find((l) => l.path === f)
-                    return (
-                      <div key={f} className={`team-file ${lock ? 'team-file--locked' : ''}`}>
-                        {lock
-                          ? <Lock size={10} strokeWidth={2} style={{ color: 'var(--warning)', flexShrink: 0 }} />
-                          : <span className="team-file-dot" />
-                        }
-                        <span className="team-file-name truncate" title={f}>{assetName(f)}</span>
-                        {!lock && f.match(/\.(uasset|umap|ubulk)$/i) && (
-                          <button
-                            className="team-lock-btn"
-                            title={`"${assetName(f)}" sperren`}
-                            disabled={working === f}
-                            onClick={(e) => { e.stopPropagation(); handleLock(f) }}
-                          >
-                            <Lock size={10} strokeWidth={2} />
-                          </button>
-                        )}
-                        {lock && (
-                          <span className="team-file-locked-label">{t('team_locked')}</span>
-                        )}
-                      </div>
-                    )
-                  })}
+              {/* Expandable content */}
+              {isOpen && hasContent && (
+                <div className="team-person-content">
+                  {/* Own changed files */}
+                  {myFiles.length > 0 && (
+                    <div className="team-section">
+                      <div className="team-section-label">In Bearbeitung</div>
+                      {myFiles.map((f) => {
+                        const myLock = person.locks.find((l) => l.path === f.path)
+                        const STATUS: Record<string, string> = { modified: 'M', added: 'A', deleted: 'D', renamed: 'R', untracked: '?', conflicted: '!' }
+                        return (
+                          <div key={f.path} className={`team-file ${myLock ? 'team-file--locked' : ''}`}>
+                            <span className={`team-file-status team-file-status--${f.status}`}>{STATUS[f.status] ?? '?'}</span>
+                            <span className="team-file-name" title={f.path}>{assetName(f.path)}</span>
+                            {myLock ? (
+                              <button className="team-lock-btn" title="Entsperren" disabled={working === myLock.id}
+                                onClick={() => handleUnlock(myLock.id, myLock.path)}>
+                                <Unlock size={10} strokeWidth={2} />
+                              </button>
+                            ) : f.path.match(/\.(uasset|umap|ubulk|uexp)$/i) ? (
+                              <button className="team-lock-btn" title="Sperren" disabled={working === f.path}
+                                onClick={() => handleLock(f.path)}>
+                                <Lock size={10} strokeWidth={2} />
+                              </button>
+                            ) : null}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Locks (own or others) */}
+                  {person.locks.filter((l) => !myFiles.find((f) => f.path === l.path)).length > 0 && (
+                    <div className="team-section">
+                      <div className="team-section-label">Gesperrte Assets</div>
+                      {person.locks.filter((l) => !myFiles.find((f) => f.path === l.path)).map((lock) => (
+                        <div key={lock.id} className="team-file team-file--locked">
+                          <Lock size={9} strokeWidth={2} style={{ color: person.isMe ? 'var(--accent)' : 'var(--warning)', flexShrink: 0 }} />
+                          <span className="team-file-name" title={lock.path}>{smartPath(lock.path)}</span>
+                          {lock.lockedAt && <span className="team-file-time">{timeAgo(lock.lockedAt)}</span>}
+                          {person.isMe && (
+                            <button className="team-lock-btn" title="Entsperren" disabled={working === lock.id}
+                              onClick={() => handleUnlock(lock.id, lock.path)}>
+                              <Unlock size={10} strokeWidth={2} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )
-        })
-      )}
+        })}
+
+        {persons.length === 0 && (
+          <div className="team-empty">Keine Team-Mitglieder gefunden.</div>
+        )}
+      </div>
     </div>
   )
 }

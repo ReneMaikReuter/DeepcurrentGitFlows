@@ -5,80 +5,10 @@ import { ipc, IPC } from '../../hooks/useIpc'
 import { useLangStore, useT } from '../../i18n/useT'
 import { manualContent } from '../../i18n/manualContent'
 import type { AppSettings, Branch } from '../../../shared/types'
+import { CHANGELOG } from './WhatsNewModal'
 import './SettingsModal.css'
 
-const CHANGELOG_ENTRIES = [
-  {
-    version: '0.2.5',
-    date: '23. September 2026',
-    changes: [
-      'Branch-Liste: zeigt jetzt an von welchem Branch ein Branch erstellt wurde',
-      'History: origin/*-Refs ausgeblendet, Badges in zweite Zeile verschoben',
-      'Geschützter Branch löschen: Fehlermeldung als Toast unten rechts',
-    ],
-  },
-  {
-    version: '0.2.4',
-    date: '23. September 2026',
-    changes: [
-      'Backup-Speicherort frei konfigurierbar (Standard AppData, alternativ Netzwerkpfad)',
-      'Backups werden jetzt pro Branch und mit konfiguriertem Limit gespeichert',
-      'Branch-Erstellung: Basis-Branch visuell wählbar',
-      'Branch-Wechsel im Kompakt-Modus hinzugefügt',
-      'Push-Button im Kompakt-Modus bei ausstehenden Commits',
-      'Geschützte Branches: Löschen wird serverseitig blockiert',
-      'AutoLock: LFS-Dateien werden beim Bearbeiten automatisch gesperrt',
-      'Changelog-Tab in den Einstellungen',
-    ],
-  },
-  {
-    version: '0.2.3',
-    date: '23. September 2026',
-    changes: [
-      'Nutzungsbedingungen: korrekte Bezeichnung als Einzelperson',
-      'Schrifttext in Nutzungsbedingungen besser lesbar',
-      'Alle Änderungen in den Release Notes vollständig ausgeschrieben',
-    ],
-  },
-  {
-    version: '0.2.1',
-    date: '23. September 2026',
-    changes: [
-      'Kompakt-Modus: reduzierte Ansicht mit Dateiliste, Commit und Sync',
-      'Pro-Modus: vollständige Ansicht mit Sidebar, Tabs, History und Team',
-      'Modus-Umschalter oben rechts in der Titelleiste',
-      'Auswahl wird gespeichert und beim nächsten Start beibehalten',
-    ],
-  },
-  {
-    version: '0.2.0',
-    date: '23. September 2026',
-    changes: [
-      'Nutzungsbedingungen und Datenschutzhinweis beim ersten Programmstart',
-      'Was-ist-neu-Anzeige nach jedem Update mit Versionshistorie',
-      'Update-Download wird zuverlässig per Polling erkannt',
-    ],
-  },
-  {
-    version: '0.1.9',
-    date: '23. September 2026',
-    changes: [
-      'Update-Download wird jetzt zuverlässig erkannt (Polling alle 2 Sekunden)',
-      'Neustart-Button funktioniert nur wenn der Download wirklich abgeschlossen ist',
-      'Abbrechen-Button im Update-Fenster hinzugefügt',
-    ],
-  },
-  {
-    version: '0.1.8',
-    date: '23. September 2026',
-    changes: [
-      'Download-Fortschritt wird simuliert und zeigt Bewegung auch ohne echte Progress-Events',
-      'Download- und Installations-Phase werden getrennt angezeigt',
-    ],
-  },
-]
-
-const VERSION = '0.2.3'
+const APP_VERSION = CHANGELOG[0]?.version ?? '0.0.0'
 
 interface Props { onClose: () => void; onCheckUpdate?: () => void; noUpdate?: boolean }
 
@@ -89,6 +19,8 @@ function applyFontSize(size: AppSettings['fontSize']) {
 
 function applyTheme(theme: AppSettings['theme']) {
   document.documentElement.setAttribute('data-theme', theme)
+  const material = theme === 'glass' ? 'acrylic' : 'none'
+  ;(window as any).deepcurrent?.invoke('window:set-material', material)
 }
 
 export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
@@ -103,6 +35,7 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
   const [activeTab, setActiveTab] = useState<'settings' | 'manual' | 'changelog'>('settings')
 
   const [currentRepo, setCurrentRepo] = useState<string | null>(null)
+  const [repoProtectedBranches, setRepoProtectedBranches] = useState<string[]>([])
 
   useEffect(() => {
     ipc.invoke<AppSettings>(IPC.SETTINGS_GET).then((s) => {
@@ -115,6 +48,9 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
       if (repo?.path) {
         setCurrentRepo(repo.path)
         ipc.invoke<string[]>(IPC.GITIGNORE_GET, repo.path).then((lines) => setGitignoreLines(lines ?? []))
+        ipc.invoke<{ protectedBranches?: string[] }>(IPC.REPO_CONFIG_GET, repo.path).then((cfg) => {
+          setRepoProtectedBranches(cfg?.protectedBranches ?? [])
+        })
       }
       const branches: Branch[] = state.branches ?? []
       setAvailableBranches(branches.filter((b) => !b.isRemote).map((b) => b.name))
@@ -133,15 +69,19 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
     if (patch.language) setLang(patch.language)
   }
 
-  const addProtected = (name: string) => {
-    if (!name || !settings) return
-    if (settings.protectedBranches.includes(name)) return
-    save({ protectedBranches: [...settings.protectedBranches, name] })
+  const addProtected = async (name: string) => {
+    if (!name || repoProtectedBranches.includes(name)) return
+    const next = [...repoProtectedBranches, name]
+    setRepoProtectedBranches(next)
+    if (currentRepo) await ipc.invoke(IPC.REPO_CONFIG_SET, currentRepo, { protectedBranches: next })
+    setSaved(true); setTimeout(() => setSaved(false), 1500)
   }
 
-  const removeProtected = (name: string) => {
-    if (!settings) return
-    save({ protectedBranches: settings.protectedBranches.filter((b) => b !== name) })
+  const removeProtected = async (name: string) => {
+    const next = repoProtectedBranches.filter((b) => b !== name)
+    setRepoProtectedBranches(next)
+    if (currentRepo) await ipc.invoke(IPC.REPO_CONFIG_SET, currentRepo, { protectedBranches: next })
+    setSaved(true); setTimeout(() => setSaved(false), 1500)
   }
 
   if (!settings) return null
@@ -204,17 +144,16 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
               <div className="settings-label">
                 <span>{t('settings_theme')}</span>
               </div>
-              <div className="settings-seg">
-                {(['dark', 'light'] as const).map((th) => (
-                  <button
-                    key={th}
-                    className={`settings-seg-btn ${settings.theme === th ? 'active' : ''}`}
-                    onClick={() => save({ theme: th })}
-                  >
-                    {th === 'dark' ? t('settings_theme_dark') : t('settings_theme_light')}
-                  </button>
-                ))}
-              </div>
+              <select
+                className="settings-select"
+                value={settings.theme}
+                onChange={(e) => save({ theme: e.target.value as AppSettings['theme'] })}
+              >
+                <option value="dark">{t('settings_theme_dark')}</option>
+                <option value="light">{t('settings_theme_light')}</option>
+                <option value="deepcurrent">Deepcurrent Studio</option>
+                <option value="glass">Glass (Acrylic)</option>
+              </select>
             </div>
 
             <div className="settings-row">
@@ -257,10 +196,10 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
             <div className="settings-row settings-row--top">
               <div className="settings-label">
                 <span>{t('settings_protected_branches')}</span>
-                <span className="settings-hint">{t('settings_protected_hint')}</span>
+                <span className="settings-hint">Gilt fuer alle im Team. Wird im Repo gespeichert (.deepcurrent/config.json).</span>
               </div>
               <div className="settings-protected-list">
-                {settings.protectedBranches.map((b) => (
+                {repoProtectedBranches.map((b) => (
                   <div key={b} className="settings-protected-tag">
                     <Shield size={10} strokeWidth={2} />
                     {b}
@@ -269,21 +208,26 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
                     </button>
                   </div>
                 ))}
-                <div className="settings-protected-add">
-                  <select
-                    className="settings-input-sm"
-                    defaultValue=""
-                    style={{ width: 160 }}
-                    onChange={(e) => { if (e.target.value) addProtected(e.target.value); e.target.value = '' }}
-                  >
-                    <option value="" disabled>{t('settings_add_branch')}</option>
-                    {availableBranches
-                      .filter((b) => !settings.protectedBranches.includes(b))
-                      .map((b) => (
-                        <option key={b} value={b}>{b}</option>
-                      ))}
-                  </select>
-                </div>
+                {!currentRepo && (
+                  <span className="settings-hint" style={{ padding: '2px 0' }}>Kein Repository geoeffnet</span>
+                )}
+                {currentRepo && (
+                  <div className="settings-protected-add">
+                    <select
+                      className="settings-input-sm"
+                      defaultValue=""
+                      style={{ width: 160 }}
+                      onChange={(e) => { if (e.target.value) addProtected(e.target.value); e.target.value = '' }}
+                    >
+                      <option value="" disabled>{t('settings_add_branch')}</option>
+                      {availableBranches
+                        .filter((b) => !repoProtectedBranches.includes(b))
+                        .map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                    </select>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -306,6 +250,36 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
                     {n}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            <div className="settings-row">
+              <div className="settings-label">
+                <span>Speicherort</span>
+                <span className="settings-hint">Leer = Standard (AppData). Netzwerkpfad z.B. Z:\Backups\Unreal</span>
+              </div>
+              <div style={{ display: 'flex', gap: 'var(--sp-2)', alignItems: 'center', flex: 1 }}>
+                <input
+                  className="settings-input-sm"
+                  style={{ flex: 1 }}
+                  value={settings.backupPath ?? ''}
+                  placeholder="Standard (AppData)"
+                  onChange={(e) => setSettings({ ...settings, backupPath: e.target.value })}
+                  onBlur={() => save({ backupPath: settings.backupPath })}
+                  onKeyDown={(e) => { if (e.key === 'Enter') save({ backupPath: settings.backupPath }) }}
+                />
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={async () => {
+                    const picked = await (window as any).deepcurrent.invoke('dialog:open-directory')
+                    if (picked) {
+                      setSettings({ ...settings, backupPath: picked })
+                      save({ backupPath: picked })
+                    }
+                  }}
+                >
+                  Durchsuchen
+                </button>
               </div>
             </div>
 
@@ -339,41 +313,6 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
               >
                 <span className="settings-toggle-knob" />
               </button>
-            </div>
-          </div>
-
-          {/* Backup-Ordner */}
-          <div className="settings-section">
-            <div className="settings-section-title">Backup-Ordner</div>
-
-            <div className="settings-row">
-              <div className="settings-label">
-                <span>Speicherort</span>
-                <span className="settings-hint">Leer = Standard (AppData). Netzwerkpfad z.B. Z:\Backups\Unreal</span>
-              </div>
-              <div style={{ display: 'flex', gap: 'var(--sp-2)', alignItems: 'center', flex: 1 }}>
-                <input
-                  className="settings-input-sm"
-                  style={{ flex: 1 }}
-                  value={settings.backupPath ?? ''}
-                  placeholder="Standard (AppData)"
-                  onChange={(e) => setSettings({ ...settings, backupPath: e.target.value })}
-                  onBlur={() => save({ backupPath: settings.backupPath })}
-                  onKeyDown={(e) => { if (e.key === 'Enter') save({ backupPath: settings.backupPath }) }}
-                />
-                <button
-                  className="btn btn-ghost btn-sm"
-                  onClick={async () => {
-                    const picked = await (window as any).deepcurrent.invoke('dialog:open-directory')
-                    if (picked) {
-                      setSettings({ ...settings, backupPath: picked })
-                      save({ backupPath: picked })
-                    }
-                  }}
-                >
-                  Durchsuchen
-                </button>
-              </div>
             </div>
           </div>
 
@@ -459,7 +398,7 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
           {/* About */}
           <div className="settings-section settings-section--about">
             <Info size={12} strokeWidth={2} style={{ color: 'var(--text-secondary)' }} />
-            <span className="settings-about-text">Deepcurrent Git Flows <strong>v{VERSION}</strong>. {t('settings_about')}</span>
+            <span className="settings-about-text">Deepcurrent Git Flows <strong>v{APP_VERSION}</strong>. {t('settings_about')}</span>
             {onCheckUpdate && (
               <button className="btn btn-ghost btn-sm" onClick={onCheckUpdate} title="Auf neue Version prüfen">
                 <RotateCcw size={10} /> {noUpdate ? 'Aktuell' : 'Updates suchen'}
@@ -472,7 +411,7 @@ export function SettingsModal({ onClose, onCheckUpdate, noUpdate }: Props) {
         </>
       ) : activeTab === 'changelog' ? (
         <div className="manual-view">
-          {CHANGELOG_ENTRIES.map((entry) => (
+          {CHANGELOG.map((entry) => (
             <div key={entry.version} className="manual-section">
               <div className="manual-section-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Sparkles size={12} strokeWidth={2} style={{ color: 'var(--accent)' }} />

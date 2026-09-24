@@ -7,7 +7,372 @@ interface ChangeEntry {
   changes: string[]
 }
 
-const CHANGELOG: ChangeEntry[] = [
+export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.7.4',
+    date: '24. September 2026',
+    changes: [
+      'Interaktives Tutorial im Startmenue — zeigt die Anwendung Schritt fuer Schritt in einer sicheren Demo-Umgebung',
+      'Tutorial laeuft im Kompakt-Modus mit Demo-Projekt "EchoesOfMyran-Demo" (Unreal Engine 5.7)',
+      'Keine echten Git-Aktionen waehrend des Tutorials — alle Aktionen sind isoliert simuliert',
+      'Typografie-Update: Inter als primaere Schrift, klarere Gewichtshierarchie, weniger Letter-Spacing',
+    ],
+  },
+  {
+    version: '0.7.3',
+    date: '24. September 2026',
+    changes: [
+      'Pro-Modus: Diff-Ansicht direkt im Änderungen-Tab — Datei anklicken zeigt Zeile-fuer-Zeile was sich aendert',
+      'Pro-Modus: Blame-Ansicht im Diff — zeigt wer welche Zeile zuletzt geaendert hat',
+      'Pro-Modus: Stash-Verwaltung im Aenderungen-Tab (erstellen, anwenden, loeschen)',
+      'Pro-Modus: Pull Request auf GitHub direkt aus der App erstellen',
+      'Pro-Modus: Branch-Graph als neuer Tab — alle Branches und Commits visuell',
+      'Pro-Modus: Cherry-Pick in der History — einzelnen Commit auf aktuellen Branch uebertragen',
+    ],
+  },
+  {
+    version: '0.7.2',
+    date: '24. September 2026',
+    changes: [
+      'Bedienungsanleitung: neuer Abschnitt "Team-Workflow" mit Dev_Branch, Push-Regeln, binaeren Konflikten und LFS-Lock-Strategie',
+    ],
+  },
+  {
+    version: '0.7.1',
+    date: '24. September 2026',
+    changes: [
+      'App-Icon erscheint jetzt korrekt in Taskleiste, Alt-Tab und Titelleiste',
+      'Responsive Layout: Content-Bereich begrenzt auf max. 1400px fuer bessere Lesbarkeit auf Ultrawide-Monitoren',
+      'Alle Fehlermeldungen (Push, Lock, Unlock) erscheinen jetzt im Toast unten rechts statt inline',
+      'Team-Tab: Asset-Pfade zeigen jetzt Level-Namen (z.B. FirstPerson / Lvl_FirstPerson)',
+    ],
+  },
+  {
+    version: '0.6.9',
+    date: '24. September 2026',
+    changes: [
+      'Geschuetzte Branches gelten jetzt fuer alle im Team (gespeichert in .deepcurrent/config.json im Repo)',
+      'Einstellungen: Backup-Ordner direkt unter Max. Backups',
+      'Auto-Updater: latest.yml wird jetzt korrekt hochgeladen, Updates werden wieder erkannt',
+    ],
+  },
+  {
+    version: '0.6.8',
+    date: '24. September 2026',
+    changes: [
+      'Glass Theme: Panels deutlich undurchsichtiger (0.72/0.82) fuer bessere Lesbarkeit',
+      'Glass Theme: Blur-Staerke auf 10px reduziert statt 40px, weniger Unschaerfe',
+      'Glass Theme: Sekundaertexte und Hilfstexte staerker deckend',
+      'Light Theme: Tippfehler in Text-Farbe behoben (war ungueltige CSS-Farbe)',
+      'Sidebar-Resize: Min/Max-Grenzen (160px bis 400px) sichern Layout bei kleinen Fenstern',
+    ],
+  },
+  {
+    version: '0.6.7',
+    date: '24. September 2026',
+    changes: [
+      'Team-Tab: Aktive Person pro Branch wird jetzt aus dem echten Git-Verlauf (letzte 30 Tage) ermittelt statt aus dem Branch-Ersteller',
+      'Team-Tab: Asset-Pfade werden lesbar angezeigt (z.B. "Lvl_FirstPerson (External Actor)" statt kryptischer Hash-Dateinamen)',
+    ],
+  },
+  {
+    version: '0.6.6',
+    date: '24. September 2026',
+    changes: [
+      'Team-Tab: alle Teammitglieder sichtbar — auch wenn ihr Branch nur remote existiert',
+    ],
+  },
+  {
+    version: '0.6.5',
+    date: '24. September 2026',
+    changes: [
+      'Commit-Sperre: Wenn ein anderes Teammitglied eine Datei gesperrt hat, wird der Commit blockiert mit dem Namen der Person',
+    ],
+  },
+  {
+    version: '0.6.4',
+    date: '24. September 2026',
+    changes: [
+      'Team-Tab komplett überarbeitet: aufklappbare Karte pro Person mit Branch, Änderungen und gesperrten Assets',
+      'Alle Teammitglieder werden jetzt angezeigt — auch wenn sie keine LFS-Locks haben',
+    ],
+  },
+  {
+    version: '0.6.3',
+    date: '24. September 2026',
+    changes: [
+      'LFS-Entsperren funktioniert jetzt ohne Admin-Rechte — eigene Locks werden per ID entsperrt',
+      'AutoLock sperrt keine Assets mehr beim Status-Check — nur noch nach einem Commit, damit kein anderer Account versehentlich sperrt',
+    ],
+  },
+  {
+    version: '0.6.2',
+    date: '24. September 2026',
+    changes: [
+      'Dateiliste: Schloss-Icon neben LFS-Assets zum manuellen Sperren und Entsperren',
+      'Dateiliste: GESPERRT-Badge zeigt jetzt korrekt an wenn ein anderes Teammitglied die Datei gesperrt hat',
+      'Team-Tab: LFS-Locks von Teammitgliedern werden jetzt zuverlässig angezeigt',
+    ],
+  },
+  {
+    version: '0.6.1',
+    date: '24. September 2026',
+    changes: [
+      'Bugfix: Team-Tab zeigt jetzt Locks aller Teammitglieder korrekt an (JSON-Format von --verify wurde falsch geparst)',
+    ],
+  },
+  {
+    version: '0.6.0',
+    date: '24. September 2026',
+    changes: [
+      'Kompakt-Modus: Checkboxen jetzt korrekt im dunklen Theme dargestellt',
+    ],
+  },
+  {
+    version: '0.5.9',
+    date: '24. September 2026',
+    changes: [
+      'Gelöschte Branches verschwinden jetzt automatisch — beim Öffnen und beim Aktualisieren werden verwaiste lokale Branches aufgeräumt',
+      'Branches können jetzt gesperrt sehen egal auf welchem Branch man selbst gerade ist',
+    ],
+  },
+  {
+    version: '0.5.8',
+    date: '24. September 2026',
+    changes: [
+      'Team-Tab: LFS-Locks werden jetzt direkt vom Server gelesen — Locks anderer Teammitglieder erscheinen sofort',
+    ],
+  },
+  {
+    version: '0.5.7',
+    date: '24. September 2026',
+    changes: [
+      'Branches-Header: Aktualisieren-Button zum manuellen Refresh der Branch-Liste',
+      'Branch löschen: löscht jetzt automatisch auch den Remote-Branch mit',
+    ],
+  },
+  {
+    version: '0.5.6',
+    date: '24. September 2026',
+    changes: [
+      'Branch-Listen-Zeilen mehr Luft: Name und Autor nicht mehr gequetscht',
+      'Repo öffnen: alle Remote-Branches werden automatisch lokal getrackt — kein manuelles Auschecken mehr nötig',
+      'Origin-Branches: Merge-Icon zum direkten Mergen in den aktuellen Branch',
+    ],
+  },
+  {
+    version: '0.5.5',
+    date: '24. September 2026',
+    changes: [
+      'Origin-Branches: Merge-Icon zum direkten Mergen in den aktuellen Branch (ohne vorher lokal auschecken)',
+    ],
+  },
+  {
+    version: '0.5.4',
+    date: '24. September 2026',
+    changes: [
+      'Einstellungen: Changelog zeigt jetzt immer die aktuelle Version (war fest auf 0.3.0 eingefroren)',
+    ],
+  },
+  {
+    version: '0.5.3',
+    date: '24. September 2026',
+    changes: [
+      'Branch erstellen: "von"-Dropdown zeigt jetzt auch Origin-Branches die noch nicht lokal vorhanden sind',
+    ],
+  },
+  {
+    version: '0.5.2',
+    date: '24. September 2026',
+    changes: [
+      'Bugfix: Sync-Fehler "no tracking information" wird automatisch behoben — Upstream wird gesetzt und Pull wiederholt',
+    ],
+  },
+  {
+    version: '0.5.1',
+    date: '24. September 2026',
+    changes: [
+      'Branch-Anzeige: Zeigt jetzt wer zuletzt auf einem Branch gearbeitet hat (Vorname unter dem Branch-Namen)',
+      'FancyZones / Windows Snap: Fenster skaliert jetzt korrekt nach dem Einrasten in eine Zone',
+    ],
+  },
+  {
+    version: '0.5.0',
+    date: '24. September 2026',
+    changes: [
+      'Bugfix: "Repo nicht registriert" beim Auschecken von Branches behoben (Pfadvergleich jetzt case-insensitiv)',
+    ],
+  },
+  {
+    version: '0.4.9',
+    date: '24. September 2026',
+    changes: [
+      'Origin-Branches: Download-Icon zum lokalen Auschecken — Branch wird erstellt und direkt gewechselt',
+    ],
+  },
+  {
+    version: '0.4.8',
+    date: '24. September 2026',
+    changes: [
+      'AutoLock ist jetzt standardmäßig aktiviert: LFS-Dateien werden beim Bearbeiten automatisch gesperrt',
+    ],
+  },
+  {
+    version: '0.4.7',
+    date: '24. September 2026',
+    changes: [
+      'Sync-Fehler jetzt mit konkreter Ursache: LFS-Auth, lokale Konflikte, 401/403, Netzwerk',
+      'Fetch-Fehler ebenfalls mit praeziser Meldung (Token, Repo nicht gefunden, etc.)',
+    ],
+  },
+  {
+    version: '0.4.6',
+    date: '24. September 2026',
+    changes: [
+      'Windows Snap und PowerToys FancyZones: Fenster rastet jetzt korrekt in Zonen ein und passt Groesse an',
+    ],
+  },
+  {
+    version: '0.4.5',
+    date: '23. September 2026',
+    changes: [
+      'Deepcurrent Theme: Universum-Hintergrund mit 620 animierten Sternen und Nebel-Overlay',
+      'Deepcurrent Theme: Sterne mit Twinkle-Animation und subtilen Glows auf groesseren Sternen',
+    ],
+  },
+  {
+    version: '0.4.4',
+    date: '23. September 2026',
+    changes: [
+      'Branch umbenennen: Stift-Icon erscheint beim Hover, Inline-Eingabe mit Enter/Escape',
+    ],
+  },
+  {
+    version: '0.4.3',
+    date: '23. September 2026',
+    changes: [
+      'Deepcurrent Theme: Alle Hintergruende jetzt Violet-getönt statt Blau',
+      'Deepcurrent Theme: Aktiver Branch und Hover-Zustaende mit saettigerem Violet',
+      'Deepcurrent Theme: Aktiver Tab-Underline in Ember-Orange',
+    ],
+  },
+  {
+    version: '0.4.2',
+    date: '23. September 2026',
+    changes: [
+      'Glass Theme: Panel-Hintergruende staerker undurchsichtig fuer bessere Lesbarkeit',
+      'Glass Theme: Text vollstaendig deckend (kein halbtransparenter Text mehr)',
+      'Glass Theme: Starkerer Blur-Effekt auf allen Panels (40px statt 20px)',
+    ],
+  },
+  {
+    version: '0.4.1',
+    date: '23. September 2026',
+    changes: [
+      'Konflikt-Warnung: Dateien die von Teammitgliedern gesperrt sind, werden mit GESPERRT-Badge markiert',
+      'Branch Status-Ampel: gruener/gelber/roter Punkt zeigt ob ein Branch mit Remote synchron ist',
+      'Commit-Templates: Prefix-Dropdown fuer feat, fix, refactor, content, design, wip u.a.',
+      'Datei-Historie: History-Icon in der Dateiliste zeigt die letzten 20 Commits fuer eine Datei',
+      'Glass Theme: Hintergrund noch transparenter (mehr Milchglas-Effekt)',
+    ],
+  },
+  {
+    version: '0.4.0',
+    date: '23. September 2026',
+    changes: [
+      'Glass Theme: Fenster jetzt wirklich transparent (Desktop sichtbar dahinter)',
+      'Glass Theme: html/body/root vollstaendig transparent gesetzt',
+      'Glass Theme: Acrylic wird beim Start sofort aus gespeichertem Theme geladen',
+      'Glass Theme: Wechsel zu anderem Theme macht Fenster sofort wieder opak',
+    ],
+  },
+  {
+    version: '0.3.9',
+    date: '23. September 2026',
+    changes: [
+      'Glass Theme: Fenster-Ghost beim Schliessen behoben (Acrylic wird vor Close deaktiviert)',
+      'Glass Theme: Modal-Overlay noch staerker abgedunkelt',
+    ],
+  },
+  {
+    version: '0.3.8',
+    date: '23. September 2026',
+    changes: [
+      'Glass Theme: Overlay hinter Modals stark abgedunkelt, kaum Transparenz',
+      'Glass Theme: Alle Modals (Einstellungen, Was ist neu, etc.) als dickes Milchglas',
+    ],
+  },
+  {
+    version: '0.3.7',
+    date: '23. September 2026',
+    changes: [
+      'Glass Theme: Einstellungs-Modal als dickes Milchglas, kaum Transparenz dahinter',
+    ],
+  },
+  {
+    version: '0.3.6',
+    date: '23. September 2026',
+    changes: [
+      'Branch-Herkunft ("von X") jetzt auch beim aktiven Branch sichtbar',
+      'Glass Theme: Acrylic-Effekt wird beim App-Start korrekt angewendet',
+      'Theme und Schriftgroesse werden beim Start sofort geladen',
+    ],
+  },
+  {
+    version: '0.3.5',
+    date: '23. September 2026',
+    changes: [
+      'Deepcurrent Theme: Current Violet als Highlight-Farbe fuer aktive Branches und Nav',
+      'Deepcurrent Theme: Hintergruende dunkler und mehr Lila-Tiefe',
+      'Branch-Drag: ans Ende der Liste ziehen jetzt moeglich',
+    ],
+  },
+  {
+    version: '0.3.4',
+    date: '23. September 2026',
+    changes: [
+      'Branch-Drag: ans Ende der Liste ziehen jetzt moeglich',
+      'Branch-Drag: Linie erscheint auch beim Ablegen am letzten Platz',
+    ],
+  },
+  {
+    version: '0.3.3',
+    date: '23. September 2026',
+    changes: [
+      'Branch-Drag: blaue Linie zeigt an, wo der Branch landen wird',
+    ],
+  },
+  {
+    version: '0.3.2',
+    date: '23. September 2026',
+    changes: [
+      'Glass Theme: echtes Windows Acrylic mit Frosted-Glass-Effekt',
+      'Theme-Auswahl jetzt als Dropdown (Dark, Light, Deepcurrent Studio, Glass)',
+      'Branch-Sortierung: per Drag-and-Drop eigene Reihenfolge festlegen',
+    ],
+  },
+  {
+    version: '0.3.1',
+    date: '23. September 2026',
+    changes: [
+      'Deepcurrent Studio Theme: Ember, Void, Deep Blue, Current Violet',
+      'Branch-Namen und Sidebar-Navigation: groessere, besser lesbare Schrift',
+      'Branch-Herkunft ("von X") sichtbarer',
+      'Bedienungsanleitung: Team-Tab, Kompakt-Modus, Backups dokumentiert',
+    ],
+  },
+  {
+    version: '0.3.0',
+    date: '23. September 2026',
+    changes: [
+      'Neues App-Icon: minimalistisches Git-Branch-Symbol',
+      'Team-Tab: zeigt nur noch Personen mit aktiven LFS-Locks',
+      'Team-Tab: LFS-Locks alle 5 Sekunden automatisch aktualisiert',
+      'LFS Auto-Lock: Assets direkt beim Status-Check gesperrt',
+      'Branch löschen: Remote-Fehlermeldungen verständlich (z.B. aktiver Remote-Branch)',
+      'Fenster-Jitter behoben',
+    ],
+  },
   {
     version: '0.2.5',
     date: '23. September 2026',

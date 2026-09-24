@@ -167,8 +167,55 @@ export const manualContent: Record<'de' | 'en', ManualContent> = {
                 text: 'Neue Branches existieren zunächst nur lokal. Über "Branch veröffentlichen" wird er auf den Server hochgeladen, damit andere ihn sehen können.',
               },
               {
+                label: 'Branch-Herkunft',
+                text: 'Unter jedem Branch-Namen steht klein "von [Branch]", wenn erkannt werden konnte, von welchem Branch er ursprünglich erstellt wurde. Das hilft dabei, die Verzweigungsstruktur des Projekts nachzuvollziehen.',
+              },
+              {
+                label: 'Aktiver Branch-Indikator',
+                text: 'Neben einem Branch-Namen kann ein grün pulsierender Punkt erscheinen. Das bedeutet, dass gerade jemand Assets in diesem Branch gesperrt hat und aktiv daran arbeitet. So siehst du auf einen Blick wer gerade wo tätig ist.',
+              },
+              {
+                label: 'Branch löschen',
+                text: 'Über das Papierkorb-Symbol kann ein Branch gelöscht werden. Geschützte Branches können nicht gelöscht werden und zeigen eine Fehlermeldung. Wenn ein Branch auf dem Server als Standard-Branch gesetzt ist, muss dieser zuerst auf GitHub geändert werden bevor der Branch gelöscht werden kann.',
+              },
+              {
                 label: 'Branches vs. Origin',
                 text: 'In der Seitenleiste gibt es zwei Kategorien: "Branches" zeigt deine lokalen Arbeitskopien, auf denen du aktiv arbeitest und Commits erstellen kannst. "Origin" zeigt die Spiegelkopien dieser Branches vom Server (Read-only). Origin-Branches aktualisieren sich beim Fetch/Sync und zeigen was auf dem Server liegt. Du kannst nicht direkt auf Origin-Branches wechseln oder committen, sie dienen nur zur Übersicht.',
+              },
+            ],
+          },
+          {
+            title: 'Team-Workflow',
+            intro:
+              'So arbeitet ein Unreal-Team mit Branches und Git zusammen, ohne sich gegenseitig zu blockieren.',
+            items: [
+              {
+                label: 'Dev_Branch: der gemeinsame Stand',
+                text: 'Dev_Branch ist der zentrale Branch des Teams. Alle persönlichen Branches wurden ursprünglich von Dev_Branch abgezweigt. Wenn deine Arbeit fertig ist und das gesamte Team sie sehen soll, mergst du sie in Dev_Branch. Dev_Branch ist oft als geschützter Branch eingetragen und kann nicht versehentlich gelöscht werden.',
+              },
+              {
+                label: 'Wie andere deine Änderungen bekommen',
+                text: 'Wenn du auf deinen eigenen Branch pushst, landet deine Arbeit auf dem Server (origin/dein-branch). Andere können dann in der Seitenleiste unter "Origin" deinen Branch sehen und ihn per Rechtsklick in ihren eigenen Branch mergen. Du kannst nicht direkt auf den origin-Branch eines anderen pushen — jeder arbeitet auf seinem eigenen Branch.',
+              },
+              {
+                label: 'Reihenfolge im Alltag',
+                text: '1. Arbeitssitzung beginnen: Sync auf deinem Branch. 2. Arbeiten, committen, pushen. 3. Wenn bereit: deinen Branch in Dev_Branch mergen, damit alle den neuen Stand ziehen können. 4. Andere syncen Dev_Branch und mergen ihn in ihre eigenen Branches.',
+              },
+              {
+                label: 'Nur auf eigene origin-Branches pushen',
+                text: 'Du kannst nur auf den origin-Branch pushen, der deinem lokalen Branch entspricht. Auf den origin-Branch von jemand anderem zu pushen ist nicht möglich — das ist eine Schutzfunktion von Git. Wenn du jemandem deine Änderungen geben willst, pushst du deinen eigenen Branch und die andere Person mergt ihn sich selbst in ihren Branch.',
+              },
+              {
+                label: 'Binäre Konflikte: keine automatische Lösung',
+                text: 'Wenn zwei Personen dieselbe Binärdatei (.uasset, .umap, Texturen, Sounds usw.) unabhängig voneinander geändert haben, kann Git diese Dateien nicht automatisch zusammenführen. Es gibt nur zwei Optionen: "Meins behalten" (deine Version gewinnt, die Änderungen der anderen Person gehen verloren) oder "Ihres behalten" (die Version der anderen Person gewinnt, deine Änderungen gehen verloren). Es gibt keinen Mittelweg. Genau deshalb sind LFS-Locks so wichtig: Sie verhindern, dass diese Situation überhaupt entsteht.',
+              },
+              {
+                label: 'Konflikt-Praxis: Absprache vor dem Merge',
+                text: 'Wenn ein Merge anzeigt, dass dieselbe Binärdatei auf beiden Seiten geändert wurde, klärt das persönlich oder im Team-Chat: Wessen Änderung ist aktueller oder wichtiger? Dann bewusst eine der beiden Optionen wählen. Die Entscheidung kann nicht rückgängig gemacht werden, ohne in die History zu gehen.',
+              },
+              {
+                label: 'LFS-Locks als Schutz',
+                text: 'Wenn LFS Auto-Lock aktiv ist, wird eine Datei beim Committen automatisch für andere gesperrt. Solange du eine Datei gesperrt hältst, kann niemand anderes sie in Unreal speichern. So ist sichergestellt, dass immer nur eine Person gleichzeitig an einer Binärdatei arbeitet und keine Konfliktsituation entstehen kann.',
               },
             ],
           },
@@ -206,7 +253,7 @@ export const manualContent: Record<'de' | 'en', ManualContent> = {
               },
               {
                 label: 'Manuell sperren und entsperren',
-                text: 'Im Team-Tab unter "Gesperrte Assets" siehst du alle aktiven Locks mit dem Besitzer und dem Zeitstempel. Deine eigenen Locks kannst du dort per Klick auf das Schloss-Symbol aufheben. Locks anderer Teammitglieder kannst du mit "Force Unlock" überschreiben, wenn du Admin-Rechte hast.',
+                text: 'Im Team-Tab siehst du alle aktiven Locks mit dem Besitzer. Deine eigenen Locks kannst du per Klick auf das Schloss-Symbol aufheben. Locks anderer Teammitglieder kannst du mit "Force Unlock" überschreiben, wenn nötig.',
               },
               {
                 label: 'Entsperren mit ungespeicherten Änderungen',
@@ -219,6 +266,67 @@ export const manualContent: Record<'de' | 'en', ManualContent> = {
               {
                 label: 'Hinweis',
                 text: 'LFS-Dateien sind binär. Sie können nicht automatisch gemergt werden. Deshalb sind Locks so wichtig.',
+              },
+            ],
+          },
+          {
+            title: 'Team-Tab',
+            intro:
+              'Der Team-Tab zeigt in Echtzeit, wer gerade aktiv Assets gesperrt hat. Die Anzeige wird alle 5 Sekunden automatisch aktualisiert.',
+            items: [
+              {
+                label: 'Wer wird angezeigt?',
+                text: 'Nur Personen, die aktuell mindestens eine LFS-Sperre aktiv haben. Wer keine Assets gesperrt hat, erscheint nicht in der Liste. Die historische Commit-Aktivität wird bewusst nicht angezeigt.',
+              },
+              {
+                label: 'Meine Aktivität',
+                text: 'Ganz oben siehst du deinen eigenen Status: aktiver Branch, Anzahl offener Änderungen, und deine eigenen gesperrten Assets. Bei UE-Dateien kannst du dort manuell sperren und entsperren.',
+              },
+              {
+                label: 'Andere Teammitglieder',
+                text: 'Darunter erscheinen alle anderen Personen, die gerade Assets gesperrt haben, mit einer Liste der betroffenen Dateien und wie lange die Sperre schon besteht.',
+              },
+              {
+                label: 'Kompakt-Modus',
+                text: 'Der Team-Tab ist auch im Kompakt-Modus verfügbar. Einfach oben auf den "Team"-Reiter klicken.',
+              },
+            ],
+          },
+          {
+            title: 'Backups',
+            intro:
+              'Die App kann automatisch lokale Backups deines Repositories erstellen, bevor riskante Operationen wie Merges oder Syncs durchgeführt werden.',
+            items: [
+              {
+                label: 'Speicherort',
+                text: 'Standardmässig werden Backups im AppData-Ordner gespeichert. In den Einstellungen unter "Backups" kannst du einen eigenen Ordner festlegen, zum Beispiel ein Netzlaufwerk oder eine externe Festplatte.',
+              },
+              {
+                label: 'Anzahl behalten',
+                text: 'Unter "Max. Backups" legst du fest, wie viele Backups pro Repository maximal gespeichert werden. Ältere Backups werden bei Bedarf automatisch gelöscht, wenn die Option "Älteste automatisch löschen" aktiv ist.',
+              },
+              {
+                label: 'Backup wiederherstellen',
+                text: 'Im History-Tab gibt es einen Backup-Bereich, wo du gespeicherte Backups einsehen und einzelne Dateien oder den gesamten Stand wiederherstellen kannst.',
+              },
+            ],
+          },
+          {
+            title: 'Kompakt-Modus',
+            intro:
+              'Der Kompakt-Modus ist eine reduzierte Ansicht für schnelle Commits und Syncs, ohne die volle Seitenleiste und alle Tabs.',
+            items: [
+              {
+                label: 'Wechseln',
+                text: 'Oben rechts in der Titelleiste befindet sich ein Schalter "Kompakt". Ein Klick darauf wechselt zwischen Kompakt- und Pro-Modus. Die Einstellung wird gespeichert.',
+              },
+              {
+                label: 'Was ist im Kompakt-Modus verfügbar?',
+                text: 'Branch-Anzeige und Wechsel, Änderungsliste, Commit, Push und Sync sowie der Team-Tab. Für History, Health-Details oder Branch-Verwaltung wechsle in den Pro-Modus.',
+              },
+              {
+                label: 'Für wen geeignet?',
+                text: 'Der Kompakt-Modus eignet sich für Teammitglieder, die hauptsächlich Dateien committen und pushen, ohne die erweiterten Funktionen zu benötigen. Zum Beispiel für Artists, die nur ihre Assets hochladen wollen.',
               },
             ],
           },
@@ -428,6 +536,41 @@ export const manualContent: Record<'de' | 'en', ManualContent> = {
               {
                 label: 'Branches vs. Origin',
                 text: 'The sidebar has two categories: "Branches" shows your local working copies where you actively commit and make changes. "Origin" shows read-only mirror copies of branches from the server. Origin branches update on Fetch/Sync and show what is on the server. You cannot switch to or commit on origin branches directly, they are for reference only.',
+              },
+            ],
+          },
+          {
+            title: 'Team Workflow',
+            intro:
+              'How an Unreal team works with branches and Git without blocking each other.',
+            items: [
+              {
+                label: 'Dev_Branch: the shared baseline',
+                text: 'Dev_Branch is the team\'s central branch. All personal branches were originally created from Dev_Branch. When your work is done and the whole team should see it, you merge it into Dev_Branch. Dev_Branch is usually listed as a protected branch and cannot be accidentally deleted.',
+              },
+              {
+                label: 'How others get your changes',
+                text: 'When you push to your own branch, your work lands on the server (origin/your-branch). Others can then see your branch in the sidebar under "Origin" and merge it into their own branch via right-click. You cannot push directly to someone else\'s origin branch — everyone works on their own branch.',
+              },
+              {
+                label: 'Day-to-day order',
+                text: '1. Start a session: Sync your branch. 2. Work, commit, push. 3. When ready: merge your branch into Dev_Branch so everyone can pull the new state. 4. Others sync Dev_Branch and merge it into their own branches.',
+              },
+              {
+                label: 'Only push to your own origin branch',
+                text: 'You can only push to the origin branch that matches your local branch. Pushing to someone else\'s origin branch is not possible — this is a Git protection mechanism. To share changes with someone, push your own branch and they merge it into theirs.',
+              },
+              {
+                label: 'Binary conflicts: no automatic resolution',
+                text: 'If two people changed the same binary file (.uasset, .umap, textures, sounds, etc.) independently, Git cannot auto-merge them. There are only two options: "Keep mine" (your version wins, the other person\'s changes are lost) or "Keep theirs" (their version wins, your changes are lost). There is no middle ground. This is exactly why LFS locks exist — they prevent this situation from happening at all.',
+              },
+              {
+                label: 'Conflict practice: align before merging',
+                text: 'If a merge shows the same binary file was changed on both sides, discuss it in person or in the team chat: whose change is newer or more important? Then deliberately choose one of the two options. The decision cannot be undone without going back into history.',
+              },
+              {
+                label: 'LFS locks as protection',
+                text: 'When LFS Auto-Lock is active, a file is automatically locked for others when you commit. As long as you hold the lock, no one else can save that file in Unreal. This ensures only one person works on a binary file at a time, preventing conflict situations before they arise.',
               },
             ],
           },

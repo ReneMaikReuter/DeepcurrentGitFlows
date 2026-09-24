@@ -1,0 +1,11 @@
+.starfield-canvas {
+  display: none;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="deepcurrent"] .starfield-canvas {
+  display: block;
+}

@@ -296,6 +296,10 @@ export class GitService {
     return { success: false, conflicts, error: result.stderr }
   }
 
+  async setUpstream(branch: string, upstream: string): Promise<void> {
+    await this.executor.git(['branch', '--set-upstream-to', upstream, branch])
+  }
+
   async push(branch: string, remote: string = 'origin', onStderr?: (chunk: string) => void): Promise<{ success: boolean; wasRejected: boolean; error: string | null }> {
     const result = await this.executor.git(['push', '--progress', remote, branch], { timeoutMs: 120_000, onStderr })
     const wasRejected = !result.success && (result.stderr.includes('rejected') || result.stderr.includes('non-fast-forward'))

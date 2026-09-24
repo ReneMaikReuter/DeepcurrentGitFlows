@@ -76,11 +76,6 @@
 }
 
 /* ── Body ─────────────────────────────────────────────────────────────── */
-.main-body {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
 
 /* ── Sidebar ──────────────────────────────────────────────────────────── */
 .sidebar {
@@ -113,6 +108,16 @@
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
+  /* Cap readable width on ultra-wide monitors */
+  max-width: 1400px;
+}
+
+/* On very wide windows, center the layout */
+.main-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  justify-content: flex-start;
 }
 
 /* ── Tab bar ──────────────────────────────────────────────────────────── */

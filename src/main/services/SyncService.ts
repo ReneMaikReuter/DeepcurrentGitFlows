@@ -127,7 +127,12 @@ export class SyncService {
     startStep('fetch')
     const fetchResult = await this.git.fetch()
     if (!fetchResult.success) {
-      return fail('NETWORK_ERROR', 'Could not reach the remote repository. Check your network connection.', [], fetchResult.error)
+      const fetchRaw = (fetchResult.error ?? '').toLowerCase()
+      let fetchMsg = 'Remote nicht erreichbar. Netzwerkverbindung prüfen.'
+      if (fetchRaw.includes('403') || fetchRaw.includes('forbidden')) fetchMsg = 'Zugriff verweigert (403). GitHub-Token in den Einstellungen prüfen.'
+      else if (fetchRaw.includes('401') || fetchRaw.includes('unauthorized')) fetchMsg = 'Authentifizierung fehlgeschlagen (401). GitHub-Token neu eingeben.'
+      else if (fetchRaw.includes('repository not found') || fetchRaw.includes('not found')) fetchMsg = 'Repository nicht gefunden. Remote-URL in den Einstellungen prüfen.'
+      return fail('NETWORK_ERROR', fetchMsg, [], fetchResult.error)
     }
     completeStep('fetch')
 
@@ -157,8 +162,15 @@ export class SyncService {
       startStep('pull')
       const pullResult = await this.git.pull()
 
-      if (!pullResult.success) {
-        if (pullResult.conflicts.length > 0) {
+      let effectivePullResult = pullResult
+      if (!pullResult.success && (pullResult.error ?? '').toLowerCase().includes('no tracking information')) {
+        // Auto-fix: set upstream and retry once
+        await this.git.setUpstream(currentBranch, `origin/${currentBranch}`)
+        effectivePullResult = await this.git.pull()
+      }
+
+      if (!effectivePullResult.success) {
+        if (effectivePullResult.conflicts.length > 0) {
           const conflicts = await this.git.getConflicts(currentBranch, `origin/${currentBranch}`)
           const unrealConflicts = conflicts.filter((c) => c.isUnrealAsset)
 
@@ -168,15 +180,34 @@ export class SyncService {
               'UNREAL_CONFLICT',
               `${unrealConflicts.length} Unreal asset(s) conflict with the remote version. Manual resolution required.`,
               unrealConflicts.map((c) => c.path),
-              pullResult.error,
+              effectivePullResult.error,
             )
           }
 
           update({ conflicts })
-          return fail('UNREAL_CONFLICT', 'Merge conflicts detected. Please resolve them manually.', pullResult.conflicts, pullResult.error)
+          return fail('UNREAL_CONFLICT', 'Merge conflicts detected. Please resolve them manually.', effectivePullResult.conflicts, effectivePullResult.error)
         }
 
-        return fail('NETWORK_ERROR', 'Pull failed. The remote may have rejected the request.', [], pullResult.error)
+        const raw = (effectivePullResult.error ?? '').toLowerCase()
+        let pullMsg = 'Pull fehlgeschlagen.'
+        if (raw.includes('your local changes') || raw.includes('would be overwritten') || raw.includes('please commit') || raw.includes('please stash')) {
+          pullMsg = 'Du hast lokale Änderungen die durch den Pull überschrieben würden. Bitte erst committen oder verwerfen.'
+        } else if (raw.includes('lfs') && (raw.includes('403') || raw.includes('unauthorized') || raw.includes('auth'))) {
+          pullMsg = 'LFS-Authentifizierung fehlgeschlagen. Bitte GitHub-Token in den Einstellungen prüfen.'
+        } else if (raw.includes('lfs') || raw.includes('smudge')) {
+          pullMsg = 'LFS-Download fehlgeschlagen. Prüfe deine Netzwerkverbindung und LFS-Zugriffsrechte.'
+        } else if (raw.includes('403') || raw.includes('forbidden')) {
+          pullMsg = 'Zugriff verweigert (403). Dein GitHub-Token hat möglicherweise nicht die nötigen Rechte.'
+        } else if (raw.includes('401') || raw.includes('unauthorized')) {
+          pullMsg = 'Authentifizierung fehlgeschlagen (401). Bitte GitHub-Token in den Einstellungen neu eingeben.'
+        } else if (raw.includes('could not resolve') || raw.includes('unable to connect') || raw.includes('network')) {
+          pullMsg = 'Netzwerkfehler. Prüfe deine Internetverbindung.'
+        } else if (raw.includes('rejected')) {
+          pullMsg = 'Pull wurde vom Server abgelehnt. Möglicherweise gibt es divergierende Änderungen.'
+        } else if (effectivePullResult.error) {
+          pullMsg = `Pull fehlgeschlagen: ${effectivePullResult.error.split('\n')[0]}`
+        }
+        return fail('NETWORK_ERROR', pullMsg, [], effectivePullResult.error)
       }
 
       completeStep('pull', `Merged ${behind} commit(s).`)

@@ -41,7 +41,8 @@ export function registerIpcHandlers(): void {
   const log = LogService.getInstance()
 
   function isAllowedRepo(repoPath: string): boolean {
-    return settings.get().savedRepositories.some((r) => r.path === repoPath)
+    const normalize = (p: string) => p.replace(/\\/g, '/').toLowerCase()
+    return settings.get().savedRepositories.some((r) => normalize(r.path) === normalize(repoPath))
   }
 
   function guardRepo(repoPath: string): { success: false; error: string } | null {
@@ -77,6 +78,42 @@ export function registerIpcHandlers(): void {
 
     await settings.saveRepository(repo)
     await settings.setLastOpened(repo.id)
+
+    // Auto-track all remote branches that don't have a local counterpart yet
+    const executor = new GitExecutor(resolvedPath)
+
+    // First: fetch so remote state is up to date
+    await executor.git(['fetch', '--prune', '--quiet']).catch(() => {})
+
+    const remoteListResult = await executor.git(['branch', '-r', '--format=%(refname:short)'])
+    if (remoteListResult.success) {
+      const localListResult = await executor.git(['branch', '--format=%(refname:short)'])
+      const localNames = new Set(localListResult.stdout.split('\n').map((s) => s.trim()).filter(Boolean))
+      const remoteRefs = remoteListResult.stdout.split('\n').map((s) => s.trim()).filter((s) => s.startsWith('origin/') && !s.endsWith('/HEAD'))
+      for (const ref of remoteRefs) {
+        const short = ref.replace(/^origin\//, '')
+        if (!localNames.has(short)) {
+          await executor.git(['branch', '--track', short, ref]).catch(() => {/* already exists or HEAD detached */})
+        }
+      }
+
+      // Remove local branches whose remote tracking ref is gone (deleted on server)
+      const vvResult = await executor.git(['branch', '-vv', '--format=%(refname:short) %(upstream:track)'])
+      if (vvResult.success) {
+        const currentBranchResult = await executor.git(['rev-parse', '--abbrev-ref', 'HEAD'])
+        const currentBranchName = currentBranchResult.stdout.trim()
+        const protectedBranches: string[] = settings.get().protectedBranches ?? []
+        for (const line of vvResult.stdout.split('\n')) {
+          const trimmed = line.trim()
+          if (trimmed.includes('[gone]')) {
+            const branchName = trimmed.split(' ')[0]
+            if (branchName && branchName !== currentBranchName && !protectedBranches.includes(branchName)) {
+              await executor.git(['branch', '-D', branchName]).catch(() => {})
+            }
+          }
+        }
+      }
+    }
 
     // Migrate legacy in-repo backups to AppData (one-time, silent)
     const backup = new BackupService(resolvedPath)
@@ -161,30 +198,6 @@ export function registerIpcHandlers(): void {
     ])
     const lfsStatus = await lfs.getStatus()
 
-    // AutoLock: if enabled, lock any changed LFS-tracked files not yet locked
-    if (settings.get().lfsAutoLock && files.length > 0) {
-      const executor = new GitExecutor(repoPath)
-      const locksResult = await executor.git(['lfs', 'locks', '--json']).catch(() => null)
-      const lockedPaths = new Set<string>()
-      if (locksResult?.success) {
-        try {
-          const raw = JSON.parse(locksResult.stdout)
-          ;(Array.isArray(raw) ? raw : []).forEach((l: Record<string, unknown>) => {
-            if (l.path) lockedPaths.add(String(l.path))
-          })
-        } catch { /* ignore parse errors */ }
-      }
-      const lfsExtensions = /\.(uasset|umap|ubulk|uexp)$/i
-      for (const f of files) {
-        if (lockedPaths.has(f.path)) continue
-        if (!lfsExtensions.test(f.path)) continue
-        const tracked = await lfs.isFileTrackedByLfs(f.path).catch(() => false)
-        if (tracked) {
-          executor.git(['lfs', 'lock', f.path]).catch(() => {/* silent if already locked by this user */})
-        }
-      }
-    }
-
     return { files, branch, health, lfsStatus }
   })
 
@@ -220,6 +233,26 @@ export function registerIpcHandlers(): void {
     const guard = guardRepo(repoPath); if (guard) return guard
     const git = new GitService(repoPath)
     const executor = new GitExecutor(repoPath)
+
+    // Fetch + prune so remote-deleted branches disappear from branch -r
+    await executor.git(['fetch', '--prune', '--quiet']).catch(() => {})
+
+    // Auto-delete local branches whose remote tracking ref is gone
+    const vvResult = await executor.git(['branch', '-vv', '--format=%(refname:short) %(upstream:track)'])
+    if (vvResult.success) {
+      const currentBranchResult = await executor.git(['rev-parse', '--abbrev-ref', 'HEAD'])
+      const currentBranchName = currentBranchResult.stdout.trim()
+      const protectedBranches: string[] = settings.get().protectedBranches ?? []
+      for (const line of vvResult.stdout.split('\n')) {
+        const trimmed = line.trim()
+        if (trimmed.includes('[gone]')) {
+          const branchName = trimmed.split(' ')[0]
+          if (branchName && branchName !== currentBranchName && !protectedBranches.includes(branchName)) {
+            await executor.git(['branch', '-D', branchName]).catch(() => {})
+          }
+        }
+      }
+    }
     const branches = await git.listBranches()
 
     // Enrich branches with activeUsers: cross-reference LFS locks with who is on each branch
@@ -285,12 +318,28 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle(IPC.BRANCH_DELETE, async (_e, repoPath: string, name: string, force: boolean, confirmed: boolean) => {
-    const protectedBranches: string[] = settings.get().protectedBranches ?? []
+    // Check repo-wide config first (team-shared), then fall back to local settings
+    let protectedBranches: string[] = settings.get().protectedBranches ?? []
+    try {
+      const configFile = repoConfigPath(repoPath)
+      if (fs.existsSync(configFile)) {
+        const repoConfig = JSON.parse(fs.readFileSync(configFile, 'utf-8'))
+        if (Array.isArray(repoConfig.protectedBranches)) {
+          protectedBranches = [...new Set([...protectedBranches, ...repoConfig.protectedBranches])]
+        }
+      }
+    } catch { /* use local settings only */ }
     if (protectedBranches.includes(name)) {
       return { success: false, error: `Branch "${name}" ist geschützt und kann nicht gelöscht werden.` }
     }
     const safe = new SafeGitService(repoPath)
-    return safe.deleteBranch(name, { force, confirmed })
+    const result = await safe.deleteBranch(name, { force, confirmed })
+    if (result.success) {
+      // Also delete on remote (silently — local delete already succeeded)
+      const executor = new GitExecutor(repoPath)
+      await executor.git(['push', 'origin', '--delete', name]).catch(() => {/* remote may not exist — that's fine */})
+    }
+    return result
   })
 
   ipcMain.handle(IPC.BRANCH_DELETE_REMOTE, async (_e, repoPath: string, remoteBranchName: string) => {
@@ -298,7 +347,36 @@ export function registerIpcHandlers(): void {
     const shortName = remoteBranchName.replace(/^origin\//, '')
     const executor = new GitExecutor(repoPath)
     const result = await executor.git(['push', 'origin', '--delete', shortName])
-    return { success: result.success, error: result.success ? null : (result.stderr || result.stdout || 'Fehler beim Löschen.') }
+    if (result.success) return { success: true, error: null }
+    const raw = result.stderr || result.stdout || ''
+    let friendly = 'Fehler beim Löschen.'
+    if (raw.includes('refusing to delete the current branch')) {
+      friendly = `Branch "${shortName}" ist auf dem Remote der aktive Branch und kann nicht gelöscht werden. Setze zuerst einen anderen Branch als Standard auf GitHub.`
+    } else if (raw.includes('remote rejected')) {
+      friendly = `Remote hat das Löschen von "${shortName}" abgelehnt.`
+    } else if (raw.includes('not found') || raw.includes('did not match')) {
+      friendly = `Branch "${shortName}" existiert nicht auf dem Remote.`
+    }
+    return { success: false, error: friendly }
+  })
+
+  ipcMain.handle(IPC.BRANCH_RENAME, async (_e, repoPath: string, oldName: string, newName: string) => {
+    if (!guardRepo(repoPath)) return { success: false, error: 'Repo nicht registriert.' }
+    const trimmed = newName.trim()
+    if (!trimmed || !/^[\w.\-/]+$/.test(trimmed)) return { success: false, error: 'Ungültiger Branch-Name.' }
+    const executor = new GitExecutor(repoPath)
+    const result = await executor.git(['branch', '-m', oldName, trimmed])
+    if (result.success) return { success: true, error: null }
+    return { success: false, error: result.stderr || 'Umbenennen fehlgeschlagen.' }
+  })
+
+  ipcMain.handle(IPC.BRANCH_CHECKOUT_REMOTE, async (_e, repoPath: string, remoteName: string) => {
+    if (!guardRepo(repoPath)) return { success: false, error: 'Repo nicht registriert.' }
+    const shortName = remoteName.replace(/^origin\//, '')
+    const executor = new GitExecutor(repoPath)
+    const result = await executor.git(['checkout', '-b', shortName, '--track', `origin/${shortName}`])
+    if (result.success) return { success: true, error: null }
+    return { success: false, error: result.stderr || 'Auschecken fehlgeschlagen.' }
   })
 
   ipcMain.handle(IPC.BRANCH_PUSH, async (_e, repoPath: string, branchName: string) => {
@@ -352,6 +430,35 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.COMMIT, async (_e, repoPath: string, request: CommitRequest) => {
     const guard = guardRepo(repoPath); if (guard) return guard
+
+    // Block commit if any staged file is locked by someone else
+    const executor = new GitExecutor(repoPath)
+    const myNameResult = await executor.git(['config', 'user.name'])
+    const myName = myNameResult.stdout.trim()
+    const locksRaw = await executor.git(['lfs', 'locks', '--verify', '--json']).catch(() => null)
+    if (locksRaw?.success) {
+      try {
+        const raw = JSON.parse(locksRaw.stdout)
+        const entries: Record<string, unknown>[] = Array.isArray(raw)
+          ? raw
+          : [...(Array.isArray(raw.ours) ? raw.ours : []), ...(Array.isArray(raw.theirs) ? raw.theirs : [])]
+        const blockers: string[] = []
+        for (const lock of entries) {
+          const owner = typeof lock.owner === 'object' && lock.owner !== null
+            ? String((lock.owner as Record<string, unknown>).name ?? '')
+            : String(lock.owner ?? '')
+          if (owner === myName) continue
+          const lockPath = String(lock.path ?? '')
+          if (request.files.includes(lockPath)) {
+            blockers.push(`"${lockPath.split('/').pop()}" ist gesperrt von ${owner}`)
+          }
+        }
+        if (blockers.length > 0) {
+          return { success: false, error: `Commit blockiert:\n${blockers.join('\n')}\n\nBitte warte bis ${blockers.length === 1 ? 'die Person' : 'die Personen'} die Sperre aufheben.` }
+        }
+      } catch { /* if parse fails, allow commit */ }
+    }
+
     const safe = new SafeGitService(repoPath)
     const result = await safe.commit(request)
 
@@ -505,15 +612,104 @@ export function registerIpcHandlers(): void {
     return members
   })
 
+  // ── Git user info ──────────────────────────────────────────────────────────
+
+  ipcMain.handle('git:user-info', async (_e, repoPath: string) => {
+    const executor = new GitExecutor(repoPath ?? '')
+    const name = await executor.git(['config', 'user.name']).catch(() => null)
+    const email = await executor.git(['config', 'user.email']).catch(() => null)
+    return {
+      name: name?.success ? name.stdout.trim() : '',
+      email: email?.success ? email.stdout.trim() : '',
+    }
+  })
+
+  // ── File History ───────────────────────────────────────────────────────────
+
+  ipcMain.handle('git:file-log', async (_e, repoPath: string, filePath: string) => {
+    const executor = new GitExecutor(repoPath)
+    const result = await executor.git([
+      'log', '--follow', '-20',
+      '--pretty=format:%H%x1f%an%x1f%ae%x1f%ai%x1f%s',
+      '--', filePath,
+    ])
+    if (!result.success) return []
+    return result.stdout.trim().split('\n').filter(Boolean).map((line) => {
+      const [hash, author, email, date, ...msgParts] = line.split('\x1f')
+      return { hash: hash?.slice(0, 7), author, email, date, message: msgParts.join('\x1f') }
+    })
+  })
+
+  // ── Team Activity ──────────────────────────────────────────────────────────
+
+  ipcMain.handle(IPC.TEAM_ACTIVITY, async (_e, repoPath: string) => {
+    // Returns map of author name → most recently active branch (from remote refs, last 30 days)
+    const executor = new GitExecutor(repoPath)
+    const result = await executor.git([
+      'log', '--remotes', '--since=30.days',
+      '--format=%an|%D',
+      '--no-merges',
+    ])
+    if (!result.success) return {}
+
+    // Parse: for each line, extract author + first matching remote branch ref
+    const activity: Record<string, string[]> = {}
+    for (const line of result.stdout.split('\n')) {
+      const [author, refs] = line.split('|')
+      if (!author?.trim() || !refs?.trim()) continue
+      const branchMatch = refs.split(',').map((r) => r.trim()).find((r) => r.startsWith('origin/') && !r.endsWith('/HEAD'))
+      const branch = branchMatch ? branchMatch.replace(/^origin\//, '') : null
+      if (!branch) continue
+      const a = author.trim()
+      if (!activity[a]) activity[a] = []
+      if (!activity[a].includes(branch)) activity[a].push(branch)
+    }
+    return activity
+  })
+
+  // ── Repo-wide Config (.deepcurrent/config.json — committed to git, shared across team) ──
+
+  const repoConfigPath = (repoPath: string) => path.join(repoPath, '.deepcurrent', 'config.json')
+
+  ipcMain.handle(IPC.REPO_CONFIG_GET, async (_e, repoPath: string) => {
+    try {
+      const configFile = repoConfigPath(repoPath)
+      if (!fs.existsSync(configFile)) return { protectedBranches: [] }
+      const raw = fs.readFileSync(configFile, 'utf-8')
+      return JSON.parse(raw)
+    } catch { return { protectedBranches: [] } }
+  })
+
+  ipcMain.handle(IPC.REPO_CONFIG_SET, async (_e, repoPath: string, patch: Record<string, unknown>) => {
+    try {
+      const configFile = repoConfigPath(repoPath)
+      const dir = path.dirname(configFile)
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+      const existing = fs.existsSync(configFile) ? JSON.parse(fs.readFileSync(configFile, 'utf-8')) : {}
+      const merged = { ...existing, ...patch }
+      fs.writeFileSync(configFile, JSON.stringify(merged, null, 2), 'utf-8')
+      // Stage the config file so it's part of the next commit
+      const executor = new GitExecutor(repoPath)
+      await executor.git(['add', '.deepcurrent/config.json']).catch(() => {})
+      return { success: true }
+    } catch (e: unknown) {
+      return { success: false, error: e instanceof Error ? e.message : String(e) }
+    }
+  })
+
   // ── LFS Locks ──────────────────────────────────────────────────────────────
 
   ipcMain.handle(IPC.LFS_LIST_LOCKS, async (_e, repoPath: string) => {
     const executor = new GitExecutor(repoPath)
-    const result = await executor.git(['lfs', 'locks', '--json'])
+    // --verify returns {"ours":[...],"theirs":[...]} — combine both arrays to get all locks
+    const result = await executor.git(['lfs', 'locks', '--verify', '--json'])
     if (!result.success) return []
     try {
       const raw = JSON.parse(result.stdout)
-      return (Array.isArray(raw) ? raw : []).map((l: Record<string, unknown>) => ({
+      const entries: Record<string, unknown>[] = Array.isArray(raw)
+        ? raw
+        : [...(Array.isArray(raw.ours) ? raw.ours : []), ...(Array.isArray(raw.theirs) ? raw.theirs : [])]
+      return entries.map((l) => ({
         id: String(l.id ?? ''),
         path: String(l.path ?? ''),
         owner: typeof l.owner === 'object' && l.owner !== null ? String((l.owner as Record<string, unknown>).name ?? '') : String(l.owner ?? ''),
@@ -530,6 +726,23 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.LFS_UNLOCK, async (_e, repoPath: string, filePath: string, force: boolean = false) => {
     const executor = new GitExecutor(repoPath)
+    // Try to unlock by lock ID first — works for own locks without --force
+    // (unlocking by path requires --force for locks created on another machine)
+    try {
+      const locksRaw = await executor.git(['lfs', 'locks', '--verify', '--json'])
+      if (locksRaw.success) {
+        const raw = JSON.parse(locksRaw.stdout)
+        const entries: Record<string, unknown>[] = Array.isArray(raw)
+          ? raw
+          : [...(Array.isArray(raw.ours) ? raw.ours : []), ...(Array.isArray(raw.theirs) ? raw.theirs : [])]
+        const lock = entries.find((l) => String(l.path ?? '') === filePath)
+        if (lock?.id) {
+          const byId = await executor.git(['lfs', 'unlock', '--id', String(lock.id)])
+          if (byId.success) return { success: true, error: null }
+        }
+      }
+    } catch { /* fall through to path-based unlock */ }
+
     const args = ['lfs', 'unlock', filePath]
     if (force) args.push('--force')
     const result = await executor.git(args)
@@ -866,6 +1079,194 @@ export function registerIpcHandlers(): void {
     if (!result.success) return { success: false, error: result.stderr || result.stdout }
     log.info('remote:push-initial', [branch])
     return { success: true }
+  })
+
+  // ── Diff & Blame ───────────────────────────────────────────────────────────
+
+  ipcMain.handle(IPC.GIT_DIFF_FILE, async (_e, repoPath: string, filePath: string, staged: boolean) => {
+    const guard = guardRepo(repoPath); if (guard) return ''
+    const executor = new GitExecutor(repoPath)
+    const args = staged
+      ? ['diff', '--cached', '--', filePath]
+      : ['diff', 'HEAD', '--', filePath]
+    const result = await executor.git(args)
+    if (!result.success && !result.stdout) return ''
+    return result.stdout || result.stderr || ''
+  })
+
+  ipcMain.handle(IPC.GIT_BLAME_FILE, async (_e, repoPath: string, filePath: string) => {
+    const guard = guardRepo(repoPath); if (guard) return []
+    const executor = new GitExecutor(repoPath)
+    const result = await executor.git(['blame', '--porcelain', '--', filePath])
+    if (!result.success) return []
+    const entries: { line: number; hash: string; author: string; date: string; summary: string }[] = []
+    const lines = result.stdout.split('\n')
+    let current: { hash: string; author: string; date: string; summary: string; line: number } | null = null
+    let lineNum = 0
+    for (const l of lines) {
+      const hashMatch = l.match(/^([0-9a-f]{40}) \d+ (\d+)/)
+      if (hashMatch) {
+        lineNum = parseInt(hashMatch[2])
+        current = { hash: hashMatch[1].slice(0, 7), author: '', date: '', summary: '', line: lineNum }
+      } else if (current) {
+        if (l.startsWith('author ')) current.author = l.slice(7)
+        else if (l.startsWith('author-time ')) current.date = new Date(parseInt(l.slice(12)) * 1000).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+        else if (l.startsWith('summary ')) { current.summary = l.slice(8); entries.push({ ...current }); current = null }
+      }
+    }
+    return entries
+  })
+
+  // ── Stash ──────────────────────────────────────────────────────────────────
+
+  ipcMain.handle(IPC.STASH_LIST, async (_e, repoPath: string) => {
+    const guard = guardRepo(repoPath); if (guard) return []
+    const executor = new GitExecutor(repoPath)
+    const result = await executor.git(['stash', 'list', '--format=%gd\x1f%h\x1f%ai\x1f%s'])
+    if (!result.success) return []
+    return result.stdout.trim().split('\n').filter(Boolean).map((line) => {
+      const [ref, shortHash, date, ...msgParts] = line.split('\x1f')
+      const index = parseInt((ref ?? '').replace('stash@{', '').replace('}', '') || '0')
+      return { index, shortHash: shortHash ?? '', date: date ? new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '', message: msgParts.join('\x1f').replace(/^On [^:]+: /, '') }
+    })
+  })
+
+  ipcMain.handle(IPC.STASH_PUSH, async (_e, repoPath: string, message?: string) => {
+    const guard = guardRepo(repoPath); if (guard) return { success: false, error: 'Repo not registered.' }
+    const executor = new GitExecutor(repoPath)
+    const args = ['stash', 'push', '--include-untracked']
+    if (message?.trim()) args.push('-m', message.trim())
+    const result = await executor.git(args)
+    return { success: result.success, error: result.success ? null : result.stderr }
+  })
+
+  ipcMain.handle(IPC.STASH_POP, async (_e, repoPath: string, index: number) => {
+    const guard = guardRepo(repoPath); if (guard) return { success: false, error: 'Repo not registered.' }
+    const executor = new GitExecutor(repoPath)
+    const result = await executor.git(['stash', 'pop', `stash@{${index}}`])
+    return { success: result.success, error: result.success ? null : result.stderr }
+  })
+
+  ipcMain.handle(IPC.STASH_APPLY, async (_e, repoPath: string, index: number) => {
+    const guard = guardRepo(repoPath); if (guard) return { success: false, error: 'Repo not registered.' }
+    const executor = new GitExecutor(repoPath)
+    const result = await executor.git(['stash', 'apply', `stash@{${index}}`])
+    return { success: result.success, error: result.success ? null : result.stderr }
+  })
+
+  ipcMain.handle(IPC.STASH_DROP, async (_e, repoPath: string, index: number) => {
+    const guard = guardRepo(repoPath); if (guard) return { success: false, error: 'Repo not registered.' }
+    const executor = new GitExecutor(repoPath)
+    const result = await executor.git(['stash', 'drop', `stash@{${index}}`])
+    return { success: result.success, error: result.success ? null : result.stderr }
+  })
+
+  // ── Cherry-Pick ────────────────────────────────────────────────────────────
+
+  ipcMain.handle(IPC.HISTORY_CHERRY_PICK, async (_e, repoPath: string, commitHash: string) => {
+    const guard = guardRepo(repoPath); if (guard) return { success: false, error: 'Repo not registered.' }
+    const executor = new GitExecutor(repoPath)
+    const result = await executor.git(['cherry-pick', commitHash])
+    if (!result.success) return { success: false, error: result.stderr || result.stdout }
+    log.info('history:cherry-pick', [commitHash])
+    return { success: true }
+  })
+
+  // ── Pull Request ───────────────────────────────────────────────────────────
+
+  ipcMain.handle(IPC.REMOTE_URL_GET, async (_e, repoPath: string) => {
+    const executor = new GitExecutor(repoPath)
+    const result = await executor.git(['remote', 'get-url', 'origin'])
+    return result.success ? result.stdout.trim() : null
+  })
+
+  ipcMain.handle(IPC.PR_CREATE, async (_e, repoPath: string, title: string, body: string, head: string, base: string) => {
+    const token = getDecryptedToken()
+    if (!token) return { success: false, error: 'Nicht mit GitHub angemeldet.' }
+    const urlResult = await new GitExecutor(repoPath).git(['remote', 'get-url', 'origin'])
+    if (!urlResult.success) return { success: false, error: 'Remote-URL nicht gefunden.' }
+    const url = urlResult.stdout.trim()
+    const m = url.match(/github\.com[:/]([^/]+)\/(.+?)(?:\.git)?$/)
+    if (!m) return { success: false, error: 'Kein GitHub-Repository erkannt.' }
+    const [, owner, repo] = m
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'Deepcurrent-Git-Flows/1.0',
+      },
+      body: JSON.stringify({ title, body, head, base }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({})) as any
+      return { success: false, error: data?.message ?? `GitHub API Fehler: ${res.status}` }
+    }
+    const pr = await res.json() as any
+    log.info('pr:create', [title, head, '->', base])
+    return { success: true, url: pr.html_url as string }
+  })
+
+  // ── Branch Graph ───────────────────────────────────────────────────────────
+
+  ipcMain.handle(IPC.BRANCH_GRAPH_GET, async (_e, repoPath: string, limit: number = 100) => {
+    const guard = guardRepo(repoPath); if (guard) return []
+    const executor = new GitExecutor(repoPath)
+    const result = await executor.git([
+      'log', '--all', `--max-count=${limit}`,
+      '--format=%H\x1f%P\x1f%an\x1f%ct\x1f%s\x1f%D',
+    ])
+    if (!result.success) return []
+    const nodes: { hash: string; shortHash: string; message: string; author: string; date: number; refs: string[]; parents: string[]; lane: number }[] = []
+    for (const raw of result.stdout.split('\n')) {
+      const line = raw.replace(/\r$/, '')
+      if (!line.trim()) continue
+      const [hash, parentStr, author, ctStr, subject, refStr] = line.split('\x1f')
+      if (!hash?.trim()) continue
+      const parents = (parentStr ?? '').trim().split(' ').filter(Boolean)
+      const refs = (refStr ?? '').split(',').map((r) => r.trim()).filter((r) => r && !r.startsWith('HEAD -> ') && !r.includes('HEAD'))
+        .map((r) => r.replace(/^HEAD -> /, ''))
+      nodes.push({
+        hash: hash.trim(),
+        shortHash: hash.trim().slice(0, 7),
+        message: (subject ?? '').trim(),
+        author: (author ?? '').trim(),
+        date: parseInt((ctStr ?? '0').trim()) * 1000,
+        refs,
+        parents,
+        lane: 0,
+      })
+    }
+    // Assign lanes: track active branches by their head commit
+    const laneMap = new Map<string, number>() // hash → lane
+    let maxLane = 0
+    const activeLanes = new Set<number>()
+    for (const node of nodes) {
+      let lane = laneMap.get(node.hash)
+      if (lane === undefined) {
+        // Find a free lane
+        let l = 0
+        while (activeLanes.has(l)) l++
+        lane = l
+        maxLane = Math.max(maxLane, l)
+        activeLanes.add(l)
+      }
+      node.lane = lane
+      activeLanes.delete(lane)
+      if (node.parents.length > 0) {
+        laneMap.set(node.parents[0], lane)
+        for (let i = 1; i < node.parents.length; i++) {
+          if (!laneMap.has(node.parents[i])) {
+            let l = 0
+            while (activeLanes.has(l)) l++
+            laneMap.set(node.parents[i], l)
+            activeLanes.add(l)
+          }
+        }
+      }
+    }
+    return nodes
   })
 
   // ── GitHub Device Flow ──────────────────────────────────────────────────────

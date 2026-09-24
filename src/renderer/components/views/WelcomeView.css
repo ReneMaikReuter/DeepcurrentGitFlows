@@ -87,6 +87,16 @@
   color: var(--text-primary);
 }
 
+.welcome-action-btn--tutorial {
+  border-color: var(--success);
+  color: var(--success);
+}
+.welcome-action-btn--tutorial:hover:not(:disabled) {
+  background: var(--success-dim);
+  border-color: var(--success);
+  color: var(--success);
+}
+
 .error-banner {
   font-size: var(--text-xs);
   color: var(--error);

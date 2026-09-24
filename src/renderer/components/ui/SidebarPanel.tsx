@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { GitBranch, Plus, ArrowUp, ArrowDown, Upload, GitMerge, Archive, Trash2, Merge, ChevronDown, ChevronRight } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { GitBranch, Plus, ArrowUp, ArrowDown, Upload, GitMerge, Archive, Trash2, Merge, ChevronDown, ChevronRight, Pencil, Download, RefreshCw } from 'lucide-react'
 import { useRepoStore } from '../../store/repoStore'
 import { ipc, IPC } from '../../hooks/useIpc'
 import { BranchSwitchModal } from './BranchSwitchModal'
@@ -30,12 +30,23 @@ export function SidebarPanel() {
   const [ueConfirmSwitch, setUeConfirmSwitch] = useState<string | null>(null)
   const [confirmDeleteRemote, setConfirmDeleteRemote] = useState<string | null>(null)
   const [deletingRemote, setDeletingRemote] = useState(false)
+  const [renamingBranch, setRenamingBranch] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+  const [checkingOutRemote, setCheckingOutRemote] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const [confirmMergeRemote, setConfirmMergeRemote] = useState<string | null>(null)
   const [localExpanded, setLocalExpanded] = useState<boolean>(() => {
     try { return localStorage.getItem('sidebar-local-expanded') !== 'false' } catch { return true }
   })
   const [originExpanded, setOriginExpanded] = useState<boolean>(() => {
     try { return localStorage.getItem('sidebar-origin-expanded') !== 'false' } catch { return true }
   })
+  const [branchOrder, setBranchOrder] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('sidebar-branch-order') ?? '[]') } catch { return [] }
+  })
+  const dragBranch = useRef<string | null>(null)
+  const dragOver = useRef<string | null>(null)
+  const [dropTarget, setDropTarget] = useState<string | null>(null)
 
   const toggleLocal = () => setLocalExpanded((v) => { const n = !v; try { localStorage.setItem('sidebar-local-expanded', String(n)) } catch {} return n })
   const toggleOrigin = () => setOriginExpanded((v) => { const n = !v; try { localStorage.setItem('sidebar-origin-expanded', String(n)) } catch {} return n })
@@ -54,10 +65,40 @@ export function SidebarPanel() {
 
   // If the branch list is empty but we know the current branch (unborn branch —
   // exists in git symbolic-ref but has no commits yet), show it as a stub.
-  const displayBranches =
+  const rawLocalBranches =
     localBranches.length === 0 && currentBranch
       ? [{ name: currentBranch, isCurrent: true, isRemote: false, upstream: null, aheadBy: 0, behindBy: 0, lastCommitHash: null, lastCommitMessage: null, lastCommitAuthor: null, lastCommitDate: null, parentBranch: null, activeUsers: [] }]
       : localBranches
+  const displayBranches = branchOrder.length > 0
+    ? [...rawLocalBranches].sort((a, b) => {
+        const ai = branchOrder.indexOf(a.name)
+        const bi = branchOrder.indexOf(b.name)
+        if (ai === -1 && bi === -1) return 0
+        if (ai === -1) return 1
+        if (bi === -1) return -1
+        return ai - bi
+      })
+    : rawLocalBranches
+
+  const handleBranchDrop = () => {
+    if (!dragBranch.current || !dragOver.current || dragBranch.current === dragOver.current) {
+      setDropTarget(null)
+      dragBranch.current = null
+      dragOver.current = null
+      return
+    }
+    const names = displayBranches.map((b) => b.name)
+    const from = names.indexOf(dragBranch.current)
+    const to = names.indexOf(dragOver.current)
+    if (from === -1 || to === -1) { setDropTarget(null); return }
+    names.splice(from, 1)
+    names.splice(to, 0, dragBranch.current)
+    setBranchOrder(names)
+    try { localStorage.setItem('sidebar-branch-order', JSON.stringify(names)) } catch {}
+    dragBranch.current = null
+    dragOver.current = null
+    setDropTarget(null)
+  }
 
   const handlePushBranch = async () => {
     if (!currentRepo || !currentBranch) return
@@ -230,6 +271,56 @@ export function SidebarPanel() {
     }
   }
 
+  const handleRenameBranch = async (oldName: string) => {
+    if (!currentRepo || !renameValue.trim() || renameValue.trim() === oldName) {
+      setRenamingBranch(null)
+      return
+    }
+    const res = await ipc.invoke<{ success: boolean; error: string | null }>(IPC.BRANCH_RENAME, currentRepo.path, oldName, renameValue.trim())
+    if (res.success) {
+      toast.ok(`Branch umbenannt: "${oldName}" → "${renameValue.trim()}"`)
+      await refreshBranches()
+    } else {
+      toast.err(res.error ?? 'Umbenennen fehlgeschlagen.')
+    }
+    setRenamingBranch(null)
+  }
+
+  const handleMergeRemote = async (remoteName: string) => {
+    if (!currentRepo) return
+    const res = await ipc.invoke<{ success: boolean; alreadyUpToDate?: boolean; error?: string; hasConflict?: boolean }>(
+      IPC.BRANCH_MERGE, currentRepo.path, remoteName
+    )
+    setConfirmMergeRemote(null)
+    if (res.success) {
+      if (res.alreadyUpToDate) {
+        toast.info(`Bereits aktuell. Keine Änderungen von "${remoteName}" zu mergen.`)
+      } else {
+        const short = remoteName.replace(/^origin\//, '')
+        toast.ok(`"${short}" erfolgreich in "${currentBranch}" gemergt.`)
+        await refreshBranches()
+        await refreshStatus()
+      }
+    } else {
+      toast.err(res.hasConflict ? `Konflikt beim Mergen von "${remoteName}". Bitte manuell auflösen.` : res.error ?? 'Merge fehlgeschlagen.')
+    }
+  }
+
+  const handleCheckoutRemote = async (remoteName: string) => {
+    if (!currentRepo) return
+    setCheckingOutRemote(remoteName)
+    const res = await ipc.invoke<{ success: boolean; error: string | null }>(IPC.BRANCH_CHECKOUT_REMOTE, currentRepo.path, remoteName)
+    if (res.success) {
+      const shortName = remoteName.replace(/^origin\//, '')
+      toast.ok(`Branch "${shortName}" lokal ausgecheckt.`)
+      await refreshBranches()
+      await switchBranch(shortName)
+    } else {
+      toast.err(res.error ?? 'Auschecken fehlgeschlagen.')
+    }
+    setCheckingOutRemote(null)
+  }
+
   const handleCreateBranch = async () => {
     if (!newBranchName.trim()) return
     setCreateError(null)
@@ -307,6 +398,19 @@ export function SidebarPanel() {
             </button>
           )}
           <button
+            className={`btn-icon${refreshing ? ' spin' : ''}`}
+            title="Branches aktualisieren"
+            onClick={async (e) => {
+              e.stopPropagation()
+              setRefreshing(true)
+              await refreshBranches()
+              setRefreshing(false)
+            }}
+            disabled={refreshing}
+          >
+            <RefreshCw size={12} strokeWidth={2} />
+          </button>
+          <button
             className="btn-icon"
             title="New branch"
             onClick={(e) => { e.stopPropagation(); setShowCreateBranch(!showCreateBranch) }}
@@ -319,7 +423,17 @@ export function SidebarPanel() {
           const isDirty = branch.isCurrent && (branch.aheadBy > 0 || branch.behindBy > 0)
           const isConfirmingDelete = confirmDeleteBranch === branch.name
           return (
-            <div key={branch.name} className={`branch-item-row ${branch.isCurrent ? 'active' : ''}`}>
+            <div
+              key={branch.name}
+              className={`branch-item-row ${branch.isCurrent ? 'active' : ''} ${dropTarget === branch.name && dragBranch.current !== branch.name ? 'drag-over' : ''}`}
+              draggable
+              onDragStart={() => { dragBranch.current = branch.name }}
+              onDragEnter={() => { dragOver.current = branch.name; setDropTarget(branch.name) }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleBranchDrop}
+              onDragEnd={() => { setDropTarget(null); dragBranch.current = null; dragOver.current = null }}
+              style={{ cursor: 'grab' }}
+            >
               <button
                 className="branch-item-btn"
                 onClick={() => { setConfirmDeleteBranch(null); setConfirmMergeBranch(null); setConfirmMergeInto(null); handleBranchClick(branch.name) }}
@@ -332,10 +446,21 @@ export function SidebarPanel() {
                 <GitBranch size={12} strokeWidth={1.8} style={{ flexShrink: 0, color: branch.isCurrent ? 'var(--accent)' : 'var(--text-secondary)' }} />
                 <span className="branch-name-wrap">
                   <span className="branch-name truncate">{branch.name}</span>
-                  {branch.parentBranch && !branch.isCurrent && (
+                  {branch.parentBranch && (
                     <span className="branch-parent">von {branch.parentBranch}</span>
                   )}
+                  {!branch.isCurrent && branch.lastCommitAuthor && (
+                    <span className="branch-last-author" title={`Zuletzt: ${branch.lastCommitAuthor}`}>
+                      {branch.lastCommitAuthor.split(' ')[0]}
+                    </span>
+                  )}
                 </span>
+                {branch.upstream && (
+                  <span
+                    className={`branch-status-dot ${branch.behindBy > 0 ? 'branch-status-dot--behind' : branch.aheadBy > 0 ? 'branch-status-dot--ahead' : 'branch-status-dot--synced'}`}
+                    title={branch.behindBy > 0 ? `${branch.behindBy} Commits hinter Remote` : branch.aheadBy > 0 ? `${branch.aheadBy} Commits vor Remote` : 'Synchron mit Remote'}
+                  />
+                )}
                 {branch.isCurrent && (
                   <span className="branch-badge">
                     {branch.aheadBy > 0 && (
@@ -374,6 +499,22 @@ export function SidebarPanel() {
                   <span className="branch-delete-confirm-text">Wechseln?</span>
                   <button className="btn btn-primary btn-sm" onClick={() => { setPendingSwitch(null); handleSwitch(branch.name) }} style={{ height: 18, fontSize: 10 }}>Ja</button>
                   <button className="btn btn-ghost btn-sm" onClick={() => setPendingSwitch(null)} style={{ height: 18, fontSize: 10 }}>Nein</button>
+                </div>
+              ) : !branch.isCurrent && renamingBranch === branch.name ? (
+                <div className="branch-rename-row">
+                  <input
+                    className="branch-rename-input"
+                    value={renameValue}
+                    autoFocus
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleRenameBranch(branch.name)
+                      if (e.key === 'Escape') setRenamingBranch(null)
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <button className="btn btn-primary btn-sm" style={{ height: 18, fontSize: 10 }} onClick={() => handleRenameBranch(branch.name)}>OK</button>
+                  <button className="btn btn-ghost btn-sm" style={{ height: 18, fontSize: 10 }} onClick={() => setRenamingBranch(null)}>✕</button>
                 </div>
               ) : !branch.isCurrent && (
                 isConfirmingDelete ? (
@@ -414,6 +555,13 @@ export function SidebarPanel() {
                     </button>
                     <button
                       className="branch-delete-btn"
+                      title={`Branch "${branch.name}" umbenennen`}
+                      onClick={() => { setRenamingBranch(branch.name); setRenameValue(branch.name); setConfirmDeleteBranch(null); setConfirmMergeBranch(null); setConfirmMergeInto(null) }}
+                    >
+                      <Pencil size={11} strokeWidth={2} />
+                    </button>
+                    <button
+                      className="branch-delete-btn"
                       title={`Branch "${branch.name}" löschen`}
                       onClick={() => setConfirmDeleteBranch(branch.name)}
                     >
@@ -425,6 +573,24 @@ export function SidebarPanel() {
             </div>
           )
         })}
+
+        {/* Drop zone at bottom of local branches */}
+        {localExpanded && (
+          <div
+            className={`branch-drop-end${dropTarget === '__end__' ? ' drag-over-end' : ''}`}
+            onDragEnter={() => { dragOver.current = '__end__'; setDropTarget('__end__') }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => {
+              if (!dragBranch.current) { setDropTarget(null); return }
+              const names = displayBranches.map((b) => b.name)
+              const from = names.indexOf(dragBranch.current)
+              if (from !== -1) { names.splice(from, 1); names.push(dragBranch.current) }
+              setBranchOrder(names)
+              try { localStorage.setItem('sidebar-branch-order', JSON.stringify(names)) } catch {}
+              dragBranch.current = null; dragOver.current = null; setDropTarget(null)
+            }}
+          />
+        )}
 
         {/* Origin / remote branches section */}
         {originBranches.length > 0 && (
@@ -438,12 +604,21 @@ export function SidebarPanel() {
             {originExpanded && originBranches.filter((b) => !b.name.endsWith('/HEAD')).map((branch) => {
               const shortName = branch.name.replace(/^origin\//, '')
               const isConfirmingDeleteRemote = confirmDeleteRemote === branch.name
+              const alreadyLocal = localBranches.some((b) => b.name === shortName)
+              const isCheckingOut = checkingOutRemote === branch.name
               return (
                 <div key={branch.name} className="branch-item-row branch-item-row--remote">
                   <div className="branch-item-btn" style={{ cursor: 'default' }}>
                     <span className="branch-indicator" style={{ background: 'var(--border-strong)' }} />
                     <GitBranch size={12} strokeWidth={1.8} style={{ flexShrink: 0, color: 'var(--text-muted)' }} />
-                    <span className="branch-name truncate" style={{ color: 'var(--text-muted)' }}>{shortName}</span>
+                    <span className="branch-name-wrap">
+                      <span className="branch-name truncate" style={{ color: 'var(--text-muted)' }}>{shortName}</span>
+                      {branch.lastCommitAuthor && (
+                        <span className="branch-last-author" title={`Zuletzt: ${branch.lastCommitAuthor}`}>
+                          {branch.lastCommitAuthor.split(' ')[0]}
+                        </span>
+                      )}
+                    </span>
                   </div>
                   {isConfirmingDeleteRemote ? (
                     <div className="branch-delete-confirm">
@@ -451,14 +626,41 @@ export function SidebarPanel() {
                       <button className="btn btn-danger btn-sm" onClick={() => handleDeleteRemoteBranch(branch.name)} disabled={deletingRemote} style={{ height: 18, fontSize: 10 }}>Ja</button>
                       <button className="btn btn-ghost btn-sm" onClick={() => setConfirmDeleteRemote(null)} style={{ height: 18, fontSize: 10 }}>Nein</button>
                     </div>
+                  ) : confirmMergeRemote === branch.name ? (
+                    <div className="branch-delete-confirm">
+                      <span className="branch-delete-confirm-text" style={{ fontSize: 9 }}>← {shortName}?</span>
+                      <button className="btn btn-primary btn-sm" onClick={() => handleMergeRemote(branch.name)} disabled={merging} style={{ height: 18, fontSize: 10 }}>Ja</button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => setConfirmMergeRemote(null)} style={{ height: 18, fontSize: 10 }}>Nein</button>
+                    </div>
                   ) : (
-                    <button
-                      className="branch-delete-btn"
-                      title={`"${shortName}" vom Server löschen`}
-                      onClick={() => setConfirmDeleteRemote(branch.name)}
-                    >
-                      <Trash2 size={11} strokeWidth={2} />
-                    </button>
+                    <>
+                      <button
+                        className="branch-delete-btn"
+                        title={`"${shortName}" in "${currentBranch}" mergen`}
+                        onClick={() => setConfirmMergeRemote(branch.name)}
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        <Merge size={11} strokeWidth={2} />
+                      </button>
+                      {!alreadyLocal && (
+                        <button
+                          className="branch-delete-btn"
+                          title={`"${shortName}" lokal auschecken`}
+                          onClick={() => handleCheckoutRemote(branch.name)}
+                          disabled={isCheckingOut}
+                          style={{ color: 'var(--accent)' }}
+                        >
+                          <Download size={11} strokeWidth={2} />
+                        </button>
+                      )}
+                      <button
+                        className="branch-delete-btn"
+                        title={`"${shortName}" vom Server löschen`}
+                        onClick={() => setConfirmDeleteRemote(branch.name)}
+                      >
+                        <Trash2 size={11} strokeWidth={2} />
+                      </button>
+                    </>
                   )}
                 </div>
               )
@@ -491,6 +693,10 @@ export function SidebarPanel() {
               {localBranches.map((b) => (
                 <option key={b.name} value={b.name}>{b.name}</option>
               ))}
+              {originBranches.filter((b) => !b.name.endsWith('/HEAD') && !localBranches.some((l) => l.name === b.name.replace(/^origin\//, ''))).map((b) => {
+                const short = b.name.replace(/^origin\//, '')
+                return <option key={b.name} value={b.name}>origin/{short}</option>
+              })}
             </select>
           </div>
           {createError && (

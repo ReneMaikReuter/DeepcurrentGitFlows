@@ -8,7 +8,8 @@ import type { AppSettings } from '../../../shared/types'
 
 function applyFontSize(size: AppSettings['fontSize']) {
   const zoom = size === 'small' ? '0.88' : size === 'large' ? '1.14' : '1'
-  ;(document.getElementById('root') as HTMLElement).style.zoom = zoom
+  const root = document.getElementById('root') as HTMLElement | null
+  if (root && root.style.zoom !== zoom) root.style.zoom = zoom
 }
 import { SidebarPanel } from '../ui/SidebarPanel'
 import { ChangesPanel } from '../ui/ChangesPanel'
@@ -16,6 +17,7 @@ import { CommitPanel } from '../ui/CommitPanel'
 import { SyncPanel } from '../ui/SyncPanel'
 import { TeamPanel } from '../ui/TeamPanel'
 import { HistoryPanel } from '../ui/HistoryPanel'
+import { BranchGraphPanel } from '../ui/BranchGraphPanel'
 import { HealthBar } from '../ui/HealthBar'
 import { ToastContainer } from '../ui/ToastContainer'
 import { ProgressBar } from '../ui/ProgressBar'
@@ -31,12 +33,13 @@ const SIDEBAR_DEFAULT = 210
 
 interface Props {
   onSwitchToCompact: () => void
+  active?: boolean
 }
 
-export function MainView({ onSwitchToCompact }: Props) {
+export function MainView({ onSwitchToCompact, active = true }: Props) {
   const { currentRepo, health, refreshStatus, changedFiles } = useRepoStore()
   const { state: updater, checkForUpdates, installNow, dismiss } = useUpdater()
-  const [activeTab, setActiveTab] = useState<'changes' | 'sync' | 'history' | 'team'>('changes')
+  const [activeTab, setActiveTab] = useState<'changes' | 'sync' | 'history' | 'graph' | 'team'>('changes')
   const [ueRunning, setUeRunning] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -75,12 +78,13 @@ export function MainView({ onSwitchToCompact }: Props) {
   }, [])
 
   useEffect(() => {
-    if (!currentRepo) return
+    if (!currentRepo || !active) return
     const interval = setInterval(() => refreshStatus(), 10_000)
     return () => clearInterval(interval)
-  }, [currentRepo, refreshStatus])
+  }, [currentRepo, refreshStatus, active])
 
   useEffect(() => {
+    if (!active) return
     const check = async () => {
       const running = await ipc.invoke<boolean>(IPC.UNREAL_IS_RUNNING)
       setUeRunning(!!running)
@@ -88,7 +92,7 @@ export function MainView({ onSwitchToCompact }: Props) {
     check()
     const interval = setInterval(check, 5000)
     return () => clearInterval(interval)
-  }, [])
+  }, [active])
 
   if (!currentRepo) return null
 
@@ -149,6 +153,7 @@ export function MainView({ onSwitchToCompact }: Props) {
             <button className={`tab-btn ${activeTab === 'changes' ? 'active' : ''}`} onClick={() => setActiveTab('changes')}>{t('tab_changes')}</button>
             <button className={`tab-btn ${activeTab === 'sync' ? 'active' : ''}`} onClick={() => setActiveTab('sync')}>{t('tab_sync')}</button>
             <button className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>{t('tab_history')}</button>
+            <button className={`tab-btn ${activeTab === 'graph' ? 'active' : ''}`} onClick={() => setActiveTab('graph')}>Graph</button>
             <button className={`tab-btn ${activeTab === 'team' ? 'active' : ''}`} onClick={() => setActiveTab('team')}>{t('tab_team')}</button>
           </div>
 
@@ -162,6 +167,7 @@ export function MainView({ onSwitchToCompact }: Props) {
             )}
             {activeTab === 'sync' && <SyncPanel />}
             {activeTab === 'history' && <HistoryPanel />}
+            {activeTab === 'graph' && <BranchGraphPanel />}
             {activeTab === 'team' && (
               <div className="panel">
                 <TeamPanel expanded />

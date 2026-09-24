@@ -14,6 +14,10 @@ ALLOWED_INVOKE_CHANNELS.add('window:is-maximized')
 ALLOWED_INVOKE_CHANNELS.add('updater:check')
 ALLOWED_INVOKE_CHANNELS.add('updater:get-state')
 ALLOWED_INVOKE_CHANNELS.add('shell:open-external')
+ALLOWED_INVOKE_CHANNELS.add('git:user-info')
+ALLOWED_INVOKE_CHANNELS.add('window:set-material')
+ALLOWED_INVOKE_CHANNELS.add('window:apply-startup-material')
+ALLOWED_INVOKE_CHANNELS.add('git:file-log')
 
 const ALLOWED_SEND_CHANNELS = new Set<string>(['updater:install-now'])
 

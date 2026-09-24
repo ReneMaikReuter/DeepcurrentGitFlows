@@ -19,8 +19,11 @@ function createWindow(): void {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    backgroundColor: '#0f0f0f',
+    icon: path.join(__dirname, '../../assets/icon.ico'),
+    backgroundColor: '#00000000',
+    transparent: true,
     frame: false,
+    thickFrame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -29,6 +32,14 @@ function createWindow(): void {
       webSecurity: true,
     },
   })
+
+  // Gespeichertes Theme vor dem Anzeigen anwenden
+  const savedTheme = SettingsService.getInstance().get().theme
+  if (savedTheme === 'glass') {
+    try { mainWindow.setBackgroundMaterial('acrylic' as any) } catch {}
+  } else {
+    mainWindow.setBackgroundColor('#111113')
+  }
 
   const isDev = process.env.NODE_ENV === 'development' || !!process.env.VITE_DEV_SERVER_URL
 
@@ -66,6 +77,26 @@ function createWindow(): void {
     mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'))
   }
 
+  // FancyZones / Windows Snap: force Electron to honour the new bounds after a snap resize.
+  // Without this, transparent frameless windows sometimes keep their old content size.
+  let resizeDebounce: ReturnType<typeof setTimeout> | null = null
+  mainWindow.on('resize', () => {
+    if (resizeDebounce) clearTimeout(resizeDebounce)
+    resizeDebounce = setTimeout(() => {
+      if (!mainWindow) return
+      const b = mainWindow.getBounds()
+      mainWindow.setBounds(b)
+    }, 50)
+  })
+
+  mainWindow.on('close', () => {
+    // Vor dem Schließen Acrylic deaktivieren damit kein Ghost-Frame sichtbar bleibt
+    try {
+      mainWindow?.setBackgroundMaterial('none')
+      mainWindow?.setBackgroundColor('#0f0f0f')
+    } catch {}
+  })
+
   mainWindow.on('closed', () => {
     mainWindow = null
   })
@@ -78,6 +109,32 @@ function createWindow(): void {
   })
   ipcMain.handle('window:close', () => mainWindow?.close())
   ipcMain.handle('window:is-maximized', () => mainWindow?.isMaximized() ?? false)
+  ipcMain.handle('window:set-material', (_e, material: 'none' | 'acrylic' | 'mica') => {
+    if (!mainWindow) return
+    try {
+      if (material === 'none') {
+        mainWindow.setBackgroundMaterial('none')
+        mainWindow.setBackgroundColor('#111113')
+      } else {
+        mainWindow.setBackgroundColor('#00000000')
+        mainWindow.setBackgroundMaterial(material as any)
+      }
+    } catch (e) {
+      // setBackgroundMaterial wirft auf Windows 10 oder aelteren Electron-Versionen
+    }
+  })
+
+  // Theme beim Start anwenden (wird direkt nach dem ersten Renderer-Load aufgerufen)
+  ipcMain.handle('window:apply-startup-material', async () => {
+    if (!mainWindow) return
+    const theme = SettingsService.getInstance().get().theme
+    if (theme === 'glass') {
+      try {
+        mainWindow.setBackgroundColor('#00000000')
+        mainWindow.setBackgroundMaterial('acrylic' as any)
+      } catch {}
+    }
+  })
 }
 
 // Persisted updater state so renderer can query it on mount (avoids race condition)
@@ -189,10 +246,10 @@ function setupSecurityPolicies(): void {
           [
             "default-src 'self'",
             "script-src 'self'",
-            "style-src 'self' 'unsafe-inline'",           // Vite injects inline styles
             "img-src 'self' data: https://avatars.githubusercontent.com",
             "connect-src 'self' https://api.github.com https://github.com https://objects.githubusercontent.com",
-            "font-src 'self' data:",
+            "font-src 'self' data: https://fonts.gstatic.com",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "frame-src 'none'",
             "object-src 'none'",
             "base-uri 'none'",

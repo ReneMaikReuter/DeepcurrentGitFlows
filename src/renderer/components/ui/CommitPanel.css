@@ -14,6 +14,23 @@
   padding-bottom: var(--sp-1);
 }
 
+.commit-prefix-select {
+  height: var(--input-h);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--sp-2);
+  width: 100%;
+  cursor: pointer;
+}
+
+.commit-prefix-select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
 .commit-message {
   height: 64px;
   font-size: var(--text-sm);

@@ -6,6 +6,25 @@
   min-height: 0;
 }
 
+/* Split layout: file list left + diff right */
+.changes-split-root {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.changes-list-side {
+  width: 320px;
+  min-width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+
 /* ── Toolbar ────────────────────────────────────────────────────────── */
 .changes-toolbar {
   display: flex;
@@ -85,6 +104,7 @@
 }
 .file-row:hover  { background: var(--bg-hover); }
 .file-row.selected { background: var(--bg-selected); }
+.file-row--diff-active { outline: 1px solid var(--accent); outline-offset: -1px; }
 .file-row.conflicted { background: rgba(224, 108, 44, 0.07); }
 
 .file-checkbox {
@@ -151,6 +171,94 @@
 .file-row:hover .file-revert-btn { opacity: 1; color: var(--text-muted); }
 .file-row:hover .file-revert-btn:hover { color: var(--error); }
 .file-revert-confirm { color: var(--error) !important; animation: none; }
+.file-history-btn { opacity: 0; transition: opacity 0.1s; }
+.file-row:hover .file-history-btn { opacity: 1; }
+.file-history-btn:hover { color: var(--accent) !important; }
+.file-lock-btn { opacity: 0.35; color: var(--text-muted); transition: opacity 0.1s, color 0.1s; }
+.file-row:hover .file-lock-btn { opacity: 1; }
+.file-lock-btn:hover { color: var(--accent) !important; }
+.file-lock-btn--locked { opacity: 1 !important; color: var(--accent) !important; }
+
+/* ── File History Modal ─────────────────────────────────────────────── */
+.file-history-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.file-history-modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  width: 520px;
+  max-height: 420px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+.file-history-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.file-history-title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+.file-history-list {
+  overflow-y: auto;
+  flex: 1;
+}
+.file-history-entry {
+  display: grid;
+  grid-template-columns: 52px 1fr auto auto;
+  gap: var(--sp-2);
+  align-items: center;
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-xs);
+}
+.file-history-entry:last-child { border-bottom: none; }
+.file-history-entry:hover { background: var(--bg-hover); }
+.file-history-hash {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.file-history-message {
+  color: var(--text-primary);
+  min-width: 0;
+}
+.file-history-author {
+  color: var(--text-muted);
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-history-date {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.file-history-empty {
+  padding: var(--sp-6) var(--sp-4);
+  color: var(--text-muted);
+  text-align: center;
+  font-size: var(--text-sm);
+}
 
 /* ── Empty state ────────────────────────────────────────────────────── */
 .changes-empty {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FolderOpen, Download, X, GitBranch, Search, Settings } from 'lucide-react'
+import { FolderOpen, Download, X, GitBranch, Search, Settings, GraduationCap } from 'lucide-react'
 import { SettingsModal } from '../ui/SettingsModal'
 import { useRepoStore } from '../../store/repoStore'
 import { ipc, IPC } from '../../hooks/useIpc'
@@ -11,7 +11,11 @@ import { useUpdater } from '../../hooks/useUpdater'
 import type { Repository, RepositoryHealth } from '../../../shared/types'
 import './WelcomeView.css'
 
-export function WelcomeView() {
+interface WelcomeViewProps {
+  onStartTutorial?: () => void
+}
+
+export function WelcomeView({ onStartTutorial }: WelcomeViewProps) {
   const t = useT()
   const { savedRepos, loadSavedRepos, openRepository, isLoading, error, clearError } = useRepoStore()
   const { state: updater, checkForUpdates, installNow, dismiss } = useUpdater()
@@ -100,6 +104,16 @@ export function WelcomeView() {
               <GitBranch size={14} strokeWidth={2} />
               Von GitHub öffnen
             </button>
+            {onStartTutorial && (
+              <button
+                className="welcome-action-btn welcome-action-btn--tutorial"
+                onClick={onStartTutorial}
+                disabled={isLoading}
+              >
+                <GraduationCap size={14} strokeWidth={2} />
+                Tutorial starten
+              </button>
+            )}
           </div>
         )}
 
